@@ -32,7 +32,8 @@ MdRenderer.prototype.urltransform = function (href) {
     case '@': return this.opts.feed_base + href
     case '&': return this.opts.blob_base + href
   }
-  return marked.Renderer.prototype.urltransform.call(this, href)
+  if (href.indexOf('javascript:') === 0) return false
+  return href
 }
 
 MdRenderer.prototype.image = function (href, title, text) {
