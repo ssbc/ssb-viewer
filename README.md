@@ -84,7 +84,7 @@ e.g. `--viewer.port 8807`.
 
 - Concept: [ssb-porthole][]
 - UI ideas: [sdash][], [patchbay][]
-- Server techniques: [ssb-web-server][], [ssb-ws][]
+- Server techniques: [ssb-web-server][], [ssb-ws][], [git-ssb-web][]
 
 
 [ssb-porthole]: %cgkDJXsh6pO5m458B3ngEro+U0qUMGTY1TRGTZOP6lQ=.sha256
