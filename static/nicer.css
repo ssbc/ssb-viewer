@@ -1,0 +1,32 @@
+.ssb-message {
+  border-bottom: 1px solid #ddd;
+  margin: 1em 0;
+}
+
+h1, h2, h3, h4 {
+  line-height: 1.2;
+}
+
+.ssb-thread {
+  width: 80ex;
+  max-width: 100%;
+  min-width: 57%;
+  margin: 0 auto;
+  line-height: 1.5;
+  font-family: sans-serif;
+}
+
+.ssb-message:target {
+	background-color: #fcfae8;
+	padding: 1em 1em 0;
+	margin: -1em -1em 0;
+}
+.ssb-message:target:first-child {
+	margin-top: 0;
+}
+
+.ssb-emoji {
+  height: 1em;
+  width: 1em;
+  vertical-align: top;
+}

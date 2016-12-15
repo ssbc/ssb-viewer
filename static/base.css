@@ -1,0 +1,15 @@
+.ssb-timestamp {
+  float: right;
+}
+
+.ssb-avatar-image {
+  vertical-align: top;
+}
+
+.ssb-avatar-name {
+  margin-left: 1ex;
+}
+
+.ssb-post img {
+  max-width: 100%;
+}
