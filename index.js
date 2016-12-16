@@ -18,7 +18,7 @@ var serveEmoji = require('emoji-server')()
 var emojiDir = path.join(require.resolve('emoji-named-characters'), '../pngs')
 var appHash = hash([fs.readFileSync(__filename)])
 
-var urlIdRegex = /^(?:\/(([%&])[A-Za-z0-9\/+]{43}=\.sha256)(?:\.([^?]*))?|(\/.*?))(?:\?(.*))?$/
+var urlIdRegex = /^(?:\/(([%&]|%25)(?:[A-Za-z0-9\/+]|%2[Ff]|%2[Bb]){43}(?:=|%3D)\.sha256)(?:\.([^?]*))?|(\/.*?))(?:\?(.*))?$/
 
 function MdRenderer(opts) {
   marked.Renderer.call(this, {})
@@ -27,10 +27,11 @@ function MdRenderer(opts) {
 MdRenderer.prototype = new marked.Renderer() 
 
 MdRenderer.prototype.urltransform = function (href) {
-  switch (href && href[0]) {
-    case '%': return this.opts.msg_base + href
-    case '@': return this.opts.feed_base + href
-    case '&': return this.opts.blob_base + href
+  if (!href) return false
+  switch (href[0]) {
+    case '%': return this.opts.msg_base + encodeURIComponent(href)
+    case '@': return this.opts.feed_base + encodeURIComponent(href)
+    case '&': return this.opts.blob_base + encodeURIComponent(href)
   }
   if (href.indexOf('javascript:') === 0) return false
   return href
@@ -41,7 +42,7 @@ MdRenderer.prototype.image = function (href, title, text) {
     + ' alt="' + text + '"'
     + (title ? ' title="' + title + '"' : '')
     + (this.options.xhtml ? '/>' : '>')
-};
+}
 
 function renderEmoji(emoji) {
   var opts = this.renderer.opts
@@ -84,8 +85,9 @@ exports.init = function (sbot, config) {
     }
     var m = urlIdRegex.exec(req.url)
     switch (m[2]) {
-      case '&': return serveBlob(req, res, sbot, m[1])
+      case '%25': m[2] = '%'; m[1] = decodeURIComponent(m[1])
       case '%': return serveId(req, res, m[1], m[3], m[5])
+      case '&': return serveBlob(req, res, sbot, m[1])
       default: return servePath(req, res, m[4])
     }
   }
