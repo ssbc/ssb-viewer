@@ -162,9 +162,11 @@ exports.init = function (sbot, config) {
 function serveBlob(req, res, sbot, id) {
   if (req.headers['if-none-match'] === id) return respond(res, 304)
   sbot.blobs.has(id, function (err, has) {
-    if (err && /^invalid/.test(err.message)) return respond(400, err.message)
-    if (err) return respond(500, err.message || err)
-    if (!has) return respond(404, 'Not found')
+    if (err) {
+      if (/^invalid/.test(err.message)) return respond(res, 400, err.message)
+      else return respond(res, 500, err.message || err)
+    }
+    if (!has) return respond(res, 404, 'Not found')
     res.writeHead(200, {
       'Cache-Control': 'public, max-age=315360000',
       'etag': id
