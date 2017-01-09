@@ -18,7 +18,7 @@ var serveEmoji = require('emoji-server')()
 var emojiDir = path.join(require.resolve('emoji-named-characters'), '../pngs')
 var appHash = hash([fs.readFileSync(__filename)])
 
-var urlIdRegex = /^(?:\/(([%&]|%25)(?:[A-Za-z0-9\/+]|%2[Ff]|%2[Bb]){43}(?:=|%3D)\.sha256)(?:\.([^?]*))?|(\/.*?))(?:\?(.*))?$/
+var urlIdRegex = /^(?:\/(([%&]|%25)(?:[A-Za-z0-9\/+]|%2[Ff]|%2[Bb]){43}(?:=|%3[Dd])\.sha256)(?:\.([^?]*))?|(\/.*?))(?:\?(.*))?$/
 
 function MdRenderer(opts) {
   marked.Renderer.call(this, {})
