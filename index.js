@@ -102,7 +102,7 @@ exports.init = function (sbot, config) {
       console.log("serving feed: " + feedId)
 
       var opts = defaultOpts
-      
+
       opts.marked = {
 	  gfm: true,
 	  mentions: true,
@@ -462,7 +462,7 @@ function renderMsg(opts, msg) {
       + ' src="' + opts.img_base + escape(msg.author.image) + '"'
       + ' height="32" width="32">'
     + '<a class="ssb-avatar-name"'
-      + ' href="' + opts.feed_base + escape(msg.value.author) + '"'
+      + ' href="/user/' + escape(msg.value.author) + '"'
       + '>' + msg.author.name + '</a>'
     + msgTimestamp(msg, name)
     + render(opts, c)
