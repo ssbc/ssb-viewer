@@ -83,7 +83,11 @@ exports.init = function (sbot, config) {
     if (req.method !== 'GET' && req.method !== 'HEAD') {
       return respond(res, 405, 'Method must be GET or HEAD')
     }
+
     var m = urlIdRegex.exec(req.url)
+
+    if (req.url.startsWith('/user')) return serveFeed(req, res, m[4])
+
     switch (m[2]) {
       case '%25': m[2] = '%'; m[1] = decodeURIComponent(m[1])
       case '%': return serveId(req, res, m[1], m[3], m[5])
@@ -92,6 +96,56 @@ exports.init = function (sbot, config) {
     }
   }
 
+  function serveFeed(req, res, url) {
+      var feedId = url.substring(url.lastIndexOf('user/')+5, 100)
+      console.log("serving feed: " + feedId)
+
+      var opts = defaultOpts
+      
+      opts.marked = {
+	  gfm: true,
+	  mentions: true,
+	  tables: true,
+	  breaks: true,
+	  pedantic: false,
+	  sanitize: true,
+	  smartLists: true,
+	  smartypants: false,
+	  emoji: renderEmoji,
+	  renderer: new MdRenderer(opts)
+      }
+
+      pull(
+	  sbot.createUserStream({ id: feedId, reverse: true }),
+	  pull.collect(function (err, logs) {
+	      if (err) return respond(res, 500, err.stack || err)
+	      res.writeHead(200, {
+		  'Content-Type': ctype("html")
+	      })
+	      pull(
+		  pull.values(logs),
+		  paramap(addAuthorAbout, 8),
+		  paramap(addFollowAbout, 8),
+		  pull(renderThread(opts), wrapPage(feedId)),
+		  toPull(res, function (err) {
+		      if (err) console.error('[viewer]', err)
+		  })
+	      )
+	  })
+      )
+  }
+
+  function addFollowAbout(msg, cb) {
+      if (msg.value.content.contact)
+	  getAbout(msg.value.content.contact, function (err, about) {
+	      if (err) return cb(err)
+	      msg.value.content.contactAbout = about
+	      cb(null, msg)
+	  })
+      else
+	  cb(null, msg)
+  }
+    
   function serveId(req, res, id, ext, query) {
     var q = query ? qs.parse(query) : {}
     var includeRoot = !('noroot' in q)
@@ -366,7 +420,7 @@ function renderMsg(opts, msg) {
       + ' href="' + opts.feed_base + escape(msg.value.author) + '"'
       + '>' + msg.author.name + '</a>'
     + msgTimestamp(msg, name)
-    + (c.type === 'post' ? renderPost(opts, c) : renderDefault(c))
+    + render(opts, c)
     + '</div>'
 }
 
@@ -380,6 +434,31 @@ function msgTimestamp(msg, name) {
 function formatDate(date) {
   // return date.toISOString().replace('T', ' ')
   return htime(date)
+}
+
+function render(opts, c)
+{
+    if (c.type === 'post')
+	return renderPost(opts, c)
+    else if (c.type == 'vote' && c.vote.expression == 'Dig')
+    {
+	var channel = c.channel ? ' in #' + c.channel : '' 
+	return ' dug ' + '<a href="/' + c.vote.link + '">this</a>' + channel
+    }
+    else if (c.type == 'vote')
+	return ' voted <a href="/' + c.vote.link + '">this</a>'
+    else if (c.type == 'contact' && c.following)
+	return ' followed <a href="/user/' + c.contact + '">' + c.contactAbout.name + "</a>"
+    else if (typeof c == 'string')
+	return ' wrote something private '
+    else if (c.type == 'about')
+	return ' changed something in about'
+    else if (c.type == 'issue')
+	return ' created an issue'
+    else if (c.type == 'git-update')
+	return ' did a git update'
+    else
+	return renderDefault(c)
 }
 
 function renderPost(opts, c) {
