@@ -569,6 +569,10 @@ function render(opts, c)
 	return ' created an issue'
     else if (c.type == 'git-update')
 	return ' did a git update'
+    else if (c.type == 'ssb-dns')
+	return ' updated dns'
+    else if (c.type == 'pub')
+	return ' connected to a pub'
     else
 	return renderDefault(c)
 }
