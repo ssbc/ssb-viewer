@@ -128,6 +128,7 @@ exports.init = function (sbot, config) {
 		  pull.values(logs),
 		  paramap(addAuthorAbout, 8),
 		  paramap(addFollowAbout, 8),
+		  paramap(addVoteMessage, 8),
 		  pull(renderThread(opts), wrapPage(feedId)),
 		  toPull(res, function (err) {
 		      if (err) console.error('[viewer]', err)
@@ -182,7 +183,7 @@ exports.init = function (sbot, config) {
 	  pull.filter((msg) => {
 	      return !msg.value || msg.value.author in following
 	  }),
-	  pull.filter((msg) => {
+	  pull.filter((msg) => { // channel subscription
 	      return !msg.value.content.subscribed
 	  }),
 	  pull.collect(function (err, logs) {
@@ -194,6 +195,7 @@ exports.init = function (sbot, config) {
 		  pull.values(logs),
 		  paramap(addAuthorAbout, 8),
 		  paramap(addFollowAbout, 8),
+		  paramap(addVoteMessage, 8),
 		  pull(renderThread(opts), wrapPage(feedId)),
 		  toPull(res, function (err) {
 		      if (err) console.error('[viewer]', err)
@@ -223,12 +225,9 @@ exports.init = function (sbot, config) {
       }
 
       pull(
-	  sbot.createLogStream({ reverse: true, limit: 10000 }),
+	  sbot.createLogStream({ reverse: true, limit: 2000 }),
 	  pull.filter((msg) => {
 	      return !msg.value || msg.value.content.channel == channelId
-	  }),
-	  pull.filter((msg) => {
-	      return !msg.value.content.subscribed
 	  }),
 	  pull.collect(function (err, logs) {
 	      if (err) return respond(res, 500, err.stack || err)
@@ -238,6 +237,7 @@ exports.init = function (sbot, config) {
 	      pull(
 		  pull.values(logs),
 		  paramap(addAuthorAbout, 8),
+		  paramap(addVoteMessage, 8),
 		  pull(renderThread(opts), wrapPage(channelId)),
 		  toPull(res, function (err) {
 		      if (err) console.error('[viewer]', err)
@@ -257,7 +257,18 @@ exports.init = function (sbot, config) {
       else
 	  cb(null, msg)
   }
-    
+
+  function addVoteMessage(msg, cb) {
+      if (msg.value.content.type == 'vote')
+	  getMsg(msg.value.content.vote.link, function (err, linkedMsg) {
+	      if (err) return cb(err)
+	      msg.value.content.vote.linkedText = linkedMsg.value.content.text
+	      cb(null, msg)
+	  })
+      else
+	  cb(null, msg)
+  }
+
   function serveId(req, res, id, ext, query) {
     var q = query ? qs.parse(query) : {}
     var includeRoot = !('noroot' in q)
@@ -552,13 +563,19 @@ function render(opts, c)
 {
     if (c.type === 'post')
 	return renderPost(opts, c)
-    else if (c.type == 'vote' && c.vote.expression == 'Dig')
-    {
-	var channel = c.channel ? ' in #' + c.channel : '' 
-	return ' dug ' + '<a href="/' + c.vote.link + '">this</a>' + channel
+    else if (c.type == 'vote' && c.vote.expression == 'Dig') {
+	var channel = c.channel ? ' in #' + c.channel : ''
+	var linkedText = 'this'
+	if (typeof c.vote.linkedText != 'undefined')
+	    linkedText = c.vote.linkedText.substring(0, 100)
+	return ' dug ' + '<a href="/' + c.vote.link + '">' + linkedText + '</a>' + channel
     }
-    else if (c.type == 'vote')
-	return ' voted <a href="/' + c.vote.link + '">this</a>'
+    else if (c.type == 'vote') {
+	var linkedText = 'this'
+	if (typeof c.vote.linkedText != 'undefined')
+	    linkedText = c.vote.linkedText.substring(0, 100)
+	return ' voted <a href="/' + c.vote.link + '">' + linkedText + '</a>'
+    }
     else if (c.type == 'contact' && c.following)
 	return ' followed <a href="/user/' + c.contact + '">' + c.contactAbout.name + "</a>"
     else if (typeof c == 'string')
