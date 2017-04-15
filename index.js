@@ -87,6 +87,7 @@ exports.init = function (sbot, config) {
     var m = urlIdRegex.exec(req.url)
 
     if (req.url.startsWith('/user')) return serveFeed(req, res, m[4])
+    else if (req.url.startsWith('/channel')) return serveChannel(req, res, m[4])
 
     switch (m[2]) {
       case '%25': m[2] = '%'; m[1] = decodeURIComponent(m[1])
@@ -116,7 +117,7 @@ exports.init = function (sbot, config) {
       }
 
       pull(
-	  sbot.createUserStream({ id: feedId, reverse: true }),
+	  sbot.createUserStream({ id: feedId, reverse: true, limit: 100 }),
 	  pull.collect(function (err, logs) {
 	      if (err) return respond(res, 500, err.stack || err)
 	      res.writeHead(200, {
@@ -127,6 +128,50 @@ exports.init = function (sbot, config) {
 		  paramap(addAuthorAbout, 8),
 		  paramap(addFollowAbout, 8),
 		  pull(renderThread(opts), wrapPage(feedId)),
+		  toPull(res, function (err) {
+		      if (err) console.error('[viewer]', err)
+		  })
+	      )
+	  })
+      )
+  }
+
+  function serveChannel(req, res, url) {
+      var channelId = url.substring(url.lastIndexOf('channel/')+8, 100)
+      console.log("serving channel: " + channelId)
+
+      var opts = defaultOpts
+      
+      opts.marked = {
+	  gfm: true,
+	  mentions: true,
+	  tables: true,
+	  breaks: true,
+	  pedantic: false,
+	  sanitize: true,
+	  smartLists: true,
+	  smartypants: false,
+	  emoji: renderEmoji,
+	  renderer: new MdRenderer(opts)
+      }
+
+      pull(
+	  sbot.createLogStream({ reverse: true, limit: 10000 }),
+	  pull.filter((msg) => {
+	      return !msg.value || msg.value.content.channel == channelId
+	  }),
+	  pull.filter((msg) => {
+	      return !msg.value.content.subscribed
+	  }),
+	  pull.collect(function (err, logs) {
+	      if (err) return respond(res, 500, err.stack || err)
+	      res.writeHead(200, {
+		  'Content-Type': ctype("html")
+	      })
+	      pull(
+		  pull.values(logs),
+		  paramap(addAuthorAbout, 8),
+		  pull(renderThread(opts), wrapPage(channelId)),
 		  toPull(res, function (err) {
 		      if (err) console.error('[viewer]', err)
 		  })
