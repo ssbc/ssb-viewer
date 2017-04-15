@@ -86,8 +86,9 @@ exports.init = function (sbot, config) {
 
     var m = urlIdRegex.exec(req.url)
 
-    if (req.url.startsWith('/user')) return serveFeed(req, res, m[4])
-    else if (req.url.startsWith('/channel')) return serveChannel(req, res, m[4])
+    if (req.url.startsWith('/user/')) return serveFeed(req, res, m[4])
+    else if (req.url.startsWith('/user-feed/')) return serveUserFeed(req, res, m[4])
+    else if (req.url.startsWith('/channel/')) return serveChannel(req, res, m[4])
 
     switch (m[2]) {
       case '%25': m[2] = '%'; m[1] = decodeURIComponent(m[1])
@@ -136,6 +137,72 @@ exports.init = function (sbot, config) {
       )
   }
 
+  function serveUserFeed(req, res, url) {
+      var feedId = url.substring(url.lastIndexOf('user-feed/')+10, 100)
+      console.log("serving user feed: " + feedId)
+
+      var following = []
+      
+      pull(
+	  sbot.createUserStream({ id: feedId }),
+	  pull.filter((msg) => {
+	      return !msg.value || msg.value.content.type == 'contact'
+	  }),
+	  pull.collect(function (err, msgs) {
+	      msgs.forEach((msg) => {
+		  if (msg.value.content.following)
+		      following[msg.value.content.contact] = 1
+		  else
+		      delete following[msg.value.content.contact]
+	      })
+	      
+	      serveFeeds(req, res, following, feedId)
+	  })
+      )
+  }
+
+  function serveFeeds(req, res, following, feedId) {
+      var opts = defaultOpts
+      
+      opts.marked = {
+	  gfm: true,
+	  mentions: true,
+	  tables: true,
+	  breaks: true,
+	  pedantic: false,
+	  sanitize: true,
+	  smartLists: true,
+	  smartypants: false,
+	  emoji: renderEmoji,
+	  renderer: new MdRenderer(opts)
+      }
+
+      pull(
+	  sbot.createLogStream({ reverse: true, limit: 1000 }),
+	  pull.filter((msg) => {
+	      return !msg.value || msg.value.author in following
+	  }),
+	  pull.filter((msg) => {
+	      return !msg.value.content.subscribed
+	  }),
+	  pull.collect(function (err, logs) {
+	      if (err) return respond(res, 500, err.stack || err)
+	      res.writeHead(200, {
+		  'Content-Type': ctype("html")
+	      })
+	      pull(
+		  pull.values(logs),
+		  paramap(addAuthorAbout, 8),
+		  paramap(addFollowAbout, 8),
+		  pull(renderThread(opts), wrapPage(feedId)),
+		  toPull(res, function (err) {
+		      if (err) console.error('[viewer]', err)
+		  })
+	      )
+	  })
+      )
+  }
+    
   function serveChannel(req, res, url) {
       var channelId = url.substring(url.lastIndexOf('channel/')+8, 100)
       console.log("serving channel: " + channelId)
