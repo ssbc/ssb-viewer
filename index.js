@@ -143,26 +143,40 @@ exports.init = function (sbot, config) {
       console.log("serving user feed: " + feedId)
 
       var following = []
+      var channelSubscriptions = []
       
       pull(
 	  sbot.createUserStream({ id: feedId }),
 	  pull.filter((msg) => {
-	      return !msg.value || msg.value.content.type == 'contact'
+	      return !msg.value ||
+		  msg.value.content.type == 'contact' ||
+		  (msg.value.content.type == 'channel' &&
+		   typeof msg.value.content.subscribed != 'undefined')
 	  }),
 	  pull.collect(function (err, msgs) {
 	      msgs.forEach((msg) => {
-		  if (msg.value.content.following)
-		      following[msg.value.content.contact] = 1
-		  else
-		      delete following[msg.value.content.contact]
+		  if (msg.value.content.type == 'contact')
+		  {
+		      if (msg.value.content.following)
+			  following[msg.value.content.contact] = 1
+		      else
+			  delete following[msg.value.content.contact]
+		  }
+		  else // channel subscription
+		  {
+		      if (msg.value.content.subscribed)
+			  channelSubscriptions[msg.value.content.channel] = 1
+		      else
+			  delete following[msg.value.content.channel]
+		  }
 	      })
 	      
-	      serveFeeds(req, res, following, feedId)
+	      serveFeeds(req, res, following, channelSubscriptions, feedId)
 	  })
       )
   }
 
-  function serveFeeds(req, res, following, feedId) {
+  function serveFeeds(req, res, following, channelSubscriptions, feedId) {
       var opts = defaultOpts
       
       opts.marked = {
@@ -181,7 +195,9 @@ exports.init = function (sbot, config) {
       pull(
 	  sbot.createLogStream({ reverse: true, limit: 1000 }),
 	  pull.filter((msg) => {
-	      return !msg.value || msg.value.author in following
+	      return !msg.value ||
+		  (msg.value.author in following ||
+		   msg.value.content.channel in channelSubscriptions)
 	  }),
 	  pull.filter((msg) => { // channel subscription
 	      return !msg.value.content.subscribed
@@ -228,6 +244,9 @@ exports.init = function (sbot, config) {
 	  sbot.createLogStream({ reverse: true, limit: 2000 }),
 	  pull.filter((msg) => {
 	      return !msg.value || msg.value.content.channel == channelId
+	  }),
+	  pull.filter((msg) => { // channel subscription
+	      return !msg.value.content.subscribed
 	  }),
 	  pull.collect(function (err, logs) {
 	      if (err) return respond(res, 500, err.stack || err)
@@ -561,9 +580,10 @@ function formatDate(date) {
 
 function render(opts, c)
 {
-    if (c.type === 'post')
-	return renderPost(opts, c)
-    else if (c.type == 'vote' && c.vote.expression == 'Dig') {
+    if (c.type === 'post') {
+	var channel = c.channel ? ' in #' + c.channel : ''
+	return channel + renderPost(opts, c)
+    } else if (c.type == 'vote' && c.vote.expression == 'Dig') {
 	var channel = c.channel ? ' in #' + c.channel : ''
 	var linkedText = 'this'
 	if (typeof c.vote.linkedText != 'undefined')
