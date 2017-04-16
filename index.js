@@ -118,7 +118,7 @@ exports.init = function (sbot, config) {
       }
 
       pull(
-	  sbot.createUserStream({ id: feedId, reverse: true, limit: 100 }),
+	  sbot.createUserStream({ id: feedId, reverse: true }),
 	  pull.collect(function (err, logs) {
 	      if (err) return respond(res, 500, err.stack || err)
 	      res.writeHead(200, {
@@ -193,7 +193,7 @@ exports.init = function (sbot, config) {
       }
 
       pull(
-	  sbot.createLogStream({ reverse: true, limit: 1000 }),
+	  sbot.createLogStream({ reverse: true, limit: 2500 }),
 	  pull.filter((msg) => {
 	      return !msg.value ||
 		  (msg.value.author in following ||
@@ -220,7 +220,7 @@ exports.init = function (sbot, config) {
 	  })
       )
   }
-    
+
   function serveChannel(req, res, url) {
       var channelId = url.substring(url.lastIndexOf('channel/')+8, 100)
       console.log("serving channel: " + channelId)
@@ -241,10 +241,7 @@ exports.init = function (sbot, config) {
       }
 
       pull(
-	  sbot.createLogStream({ reverse: true, limit: 2000 }),
-	  pull.filter((msg) => {
-	      return !msg.value || msg.value.content.channel == channelId
-	  }),
+	  sbot.query.read({ limit: 500, reverse: true, query: [{$filter: { value: { content: { channel: channelId }}}}]}),
 	  pull.filter((msg) => { // channel subscription
 	      return !msg.value.content.subscribed
 	  }),
@@ -596,8 +593,12 @@ function render(opts, c)
 	    linkedText = c.vote.linkedText.substring(0, 100)
 	return ' voted <a href="/' + c.vote.link + '">' + linkedText + '</a>'
     }
-    else if (c.type == 'contact' && c.following)
-	return ' followed <a href="/user/' + c.contact + '">' + c.contactAbout.name + "</a>"
+    else if (c.type == 'contact' && c.following) {
+	var name = c.contact
+	if (typeof c.contactAbout != 'undefined')
+	    name = c.contactAbout.name
+	return ' followed <a href="/user/' + c.contact + '">' + name + "</a>"
+    }
     else if (typeof c == 'string')
 	return ' wrote something private '
     else if (c.type == 'about')
