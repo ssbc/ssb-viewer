@@ -89,8 +89,11 @@ exports.init = function (sbot, config) {
     if (req.url.startsWith('/user-feed/')) return serveUserFeed(req, res, m[4])
     else if (req.url.startsWith('/channel/')) return serveChannel(req, res, m[4])
 
+    if (m[2] && m[2].length === 3) {
+      m[1] = decodeURIComponent(m[1])
+      m[2] = m[1][0]
+    }
     switch (m[2]) {
-      case '%25': m[2] = '%'; m[1] = decodeURIComponent(m[1])
       case '%': return serveId(req, res, m[1], m[3], m[5])
       case '@': return serveFeed(req, res, m[1], m[3], m[5])
       case '&': return serveBlob(req, res, sbot, m[1])
