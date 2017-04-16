@@ -18,7 +18,7 @@ var serveEmoji = require('emoji-server')()
 var emojiDir = path.join(require.resolve('emoji-named-characters'), '../pngs')
 var appHash = hash([fs.readFileSync(__filename)])
 
-var urlIdRegex = /^(?:\/(([%&]|%25)(?:[A-Za-z0-9\/+]|%2[Ff]|%2[Bb]){43}(?:=|%3[Dd])\.sha256)(?:\.([^?]*))?|(\/.*?))(?:\?(.*))?$/
+var urlIdRegex = /^(?:\/(([%&@]|%25|%26|%40)(?:[A-Za-z0-9\/+]|%2[Ff]|%2[Bb]){43}(?:=|%3[Dd])\.(?:sha256|ed25519))(?:\.([^?]*))?|(\/.*?))(?:\?(.*))?$/
 
 function MdRenderer(opts) {
   marked.Renderer.call(this, {})
@@ -86,20 +86,19 @@ exports.init = function (sbot, config) {
 
     var m = urlIdRegex.exec(req.url)
 
-    if (req.url.startsWith('/user/')) return serveFeed(req, res, m[4])
-    else if (req.url.startsWith('/user-feed/')) return serveUserFeed(req, res, m[4])
+    if (req.url.startsWith('/user-feed/')) return serveUserFeed(req, res, m[4])
     else if (req.url.startsWith('/channel/')) return serveChannel(req, res, m[4])
 
     switch (m[2]) {
       case '%25': m[2] = '%'; m[1] = decodeURIComponent(m[1])
       case '%': return serveId(req, res, m[1], m[3], m[5])
+      case '@': return serveFeed(req, res, m[1], m[3], m[5])
       case '&': return serveBlob(req, res, sbot, m[1])
       default: return servePath(req, res, m[4])
     }
   }
 
-  function serveFeed(req, res, url) {
-      var feedId = url.substring(url.lastIndexOf('user/')+5, 100)
+  function serveFeed(req, res, feedId) {
       console.log("serving feed: " + feedId)
 
       var opts = defaultOpts
@@ -529,7 +528,7 @@ function renderMsg(opts, msg) {
       + ' src="' + opts.img_base + escape(msg.author.image) + '"'
       + ' height="32" width="32">'
     + '<a class="ssb-avatar-name"'
-      + ' href="/user/' + escape(msg.value.author) + '"'
+      + ' href="/' + escape(msg.value.author) + '"'
       + '>' + msg.author.name + '</a>'
     + msgTimestamp(msg, name)
     + render(opts, c)
@@ -560,7 +559,7 @@ function render(opts, c)
     else if (c.type == 'vote')
 	return ' voted <a href="/' + c.vote.link + '">this</a>'
     else if (c.type == 'contact' && c.following)
-	return ' followed <a href="/user/' + c.contact + '">' + c.contactAbout.name + "</a>"
+	return ' followed <a href="/' + c.contact + '">' + c.contactAbout.name + "</a>"
     else if (typeof c == 'string')
 	return ' wrote something private '
     else if (c.type == 'about')
