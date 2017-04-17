@@ -201,9 +201,6 @@ exports.init = function (sbot, config) {
 		  (msg.value.author in following ||
 		   msg.value.content.channel in channelSubscriptions)
 	  }),
-	  pull.filter((msg) => { // channel subscription
-	      return !msg.value.content.subscribed
-	  }),
 	  pull.collect(function (err, logs) {
 	      if (err) return respond(res, 500, err.stack || err)
 	      res.writeHead(200, {
@@ -244,9 +241,6 @@ exports.init = function (sbot, config) {
 
       pull(
 	  sbot.query.read({ limit: 500, reverse: true, query: [{$filter: { value: { content: { channel: channelId }}}}]}),
-	  pull.filter((msg) => { // channel subscription
-	      return !msg.value.content.subscribed
-	  }),
 	  pull.collect(function (err, logs) {
 	      if (err) return respond(res, 500, err.stack || err)
 	      res.writeHead(200, {
@@ -599,7 +593,7 @@ function render(opts, c)
 	var name = c.contact
 	if (typeof c.contactAbout != 'undefined')
 	    name = c.contactAbout.name
-	return ' followed <a href="/user/' + c.contact + '">' + name + "</a>"
+	return ' followed <a href="/' + c.contact + '">' + name + "</a>"
     }
     else if (typeof c == 'string')
 	return ' wrote something private '
@@ -613,6 +607,8 @@ function render(opts, c)
 	return ' updated dns'
     else if (c.type == 'pub')
 	return ' connected to a pub'
+    else if (c.type == 'channel' && c.subscribed)
+	return ' subscribed to channel <a href="/channel/' + c.channel + '">#' + c.channel + "</a>"
     else
 	return renderDefault(c)
 }
