@@ -38,6 +38,9 @@ To add more than the base styles, you can also load `http://localhost:8807/stati
 - `/%msgid`: web page showing a message thread
 - `/%msgid.js`: script to embed a message thread
 - `/%msgid.json`: message thread as JSON
+- `/&feedid`: web page showing a complete feed
+- `/user-feed/&feedid`: web page showing messages from followed users and channels of a feed
+- `/channel/#channel`: web page showing messages in a specific channel
 
 ### Query options
 
