@@ -66,7 +66,7 @@ exports.init = function (sbot, config) {
   var base = conf.base || '/'
   var defaultOpts = {
     msg_base: conf.msg_base || base,
-    feed_base: conf.feed_base || '#',
+    feed_base: conf.feed_base || base,
     blob_base: conf.blob_base || base,
     img_base: conf.img_base || base,
     emoji_base: conf.emoji_base || (base + 'emoji/'),
