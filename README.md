@@ -99,7 +99,7 @@ e.g. `--viewer.port 8807`.
 
 ## License
 
-Copyright (c) 2016 Charles Lehner
+Copyright (c) 2016-2017 Secure Scuttlebutt Consortium
 
 Usage of the works is permitted provided that this instrument is
 retained with the works, so that any entity that uses the works is
