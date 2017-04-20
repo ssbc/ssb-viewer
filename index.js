@@ -178,6 +178,16 @@ exports.init = function (sbot, config) {
       )
   }
 
+  function take (n) {
+      return function (read) {
+	  return function (abort, cb) {
+	      //after n reads, tell the source to abort!
+	      if(!n--) return read(true, cb)
+	      read(null, cb)
+	  }
+      }
+  }
+
   function serveFeeds(req, res, following, channelSubscriptions, feedId) {
       var opts = defaultOpts
       
@@ -201,6 +211,7 @@ exports.init = function (sbot, config) {
 		  (msg.value.author in following ||
 		   msg.value.content.channel in channelSubscriptions)
 	  }),
+	  take(100),
 	  pull.collect(function (err, logs) {
 	      if (err) return respond(res, 500, err.stack || err)
 	      res.writeHead(200, {
