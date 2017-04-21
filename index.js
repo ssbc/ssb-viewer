@@ -201,7 +201,7 @@ exports.init = function (sbot, config) {
 		  (msg.value.author in following ||
 		   msg.value.content.channel in channelSubscriptions)
 	  }),
-	  pull.take(2),
+	  pull.take(100),
 	  pull.collect(function (err, logs) {
 	      if (err) return respond(res, 500, err.stack || err)
 	      res.writeHead(200, {
