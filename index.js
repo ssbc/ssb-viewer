@@ -596,6 +596,12 @@ function render(opts, c)
 	    name = c.contactAbout.name
 	return ' followed <a href="/' + c.contact + '">' + name + "</a>"
     }
+    else if (c.type == 'contact' && !c.following) {
+	var name = c.contact
+	if (typeof c.contactAbout != 'undefined')
+	    name = c.contactAbout.name
+	return ' unfollowed <a href="/' + c.contact + '">' + name + "</a>"
+    }
     else if (typeof c == 'string')
 	return ' wrote something private '
     else if (c.type == 'about')
