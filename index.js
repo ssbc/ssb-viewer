@@ -29,6 +29,7 @@ MdRenderer.prototype = new marked.Renderer()
 MdRenderer.prototype.urltransform = function (href) {
   if (!href) return false
   switch (href[0]) {
+    case '#': return '/channel/' + href.slice(1)
     case '%': return this.opts.msg_base + encodeURIComponent(href)
     case '@': return this.opts.feed_base + encodeURIComponent(href)
     case '&': return this.opts.blob_base + encodeURIComponent(href)
