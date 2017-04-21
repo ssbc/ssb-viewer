@@ -575,19 +575,19 @@ function formatDate(date) {
 function render(opts, c)
 {
     if (c.type === 'post') {
-	var channel = c.channel ? ' in #' + c.channel : ''
+	var channel = c.channel ? ' in <a href="/channel/' + c.channel + '">#' + c.channel + '</a>' : ''
 	return channel + renderPost(opts, c)
     } else if (c.type == 'vote' && c.vote.expression == 'Dig') {
-	var channel = c.channel ? ' in #' + c.channel : ''
+	var channel = c.channel ? ' in <a href="/channel/' + c.channel + '">#' + c.channel + '</a>' : ''
 	var linkedText = 'this'
 	if (typeof c.vote.linkedText != 'undefined')
-	    linkedText = c.vote.linkedText.substring(0, 100)
+	    linkedText = c.vote.linkedText.substring(0, 75)
 	return ' dug ' + '<a href="/' + c.vote.link + '">' + linkedText + '</a>' + channel
     }
     else if (c.type == 'vote') {
 	var linkedText = 'this'
 	if (typeof c.vote.linkedText != 'undefined')
-	    linkedText = c.vote.linkedText.substring(0, 100)
+	    linkedText = c.vote.linkedText.substring(0, 75)
 	return ' voted <a href="/' + c.vote.link + '">' + linkedText + '</a>'
     }
     else if (c.type == 'contact' && c.following) {
