@@ -295,7 +295,7 @@ exports.init = function (sbot, config) {
       base: base,
       base_token: baseToken,
       msg_base: q.msg_base || conf.msg_base || base,
-      feed_base: q.feed_base || conf.feed_base || '#',
+      feed_base: q.feed_base || conf.feed_base || base,
       blob_base: q.blob_base || conf.blob_base || base,
       img_base: q.img_base || conf.img_base || base,
       emoji_base: q.emoji_base || conf.emoji_base || (base + 'emoji/'),
