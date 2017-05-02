@@ -617,6 +617,8 @@ function render(opts, c)
 	return ' connected to a pub'
     else if (c.type == 'channel' && c.subscribed)
 	return ' subscribed to channel <a href="/channel/' + c.channel + '">#' + c.channel + "</a>"
+    else if (c.type == 'channel' && !c.subscribed)
+	return ' unsubscribed from channel <a href="/channel/' + c.channel + '">#' + c.channel + "</a>"
     else
 	return renderDefault(c)
 }
