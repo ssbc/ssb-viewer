@@ -47,6 +47,19 @@ exports.init = function (sbot, config) {
     emoji_base: conf.emoji_base || (base + 'emoji/'),
   }
 
+  defaultOpts.marked = {
+      gfm: true,
+      mentions: true,
+      tables: true,
+      breaks: true,
+      pedantic: false,
+      sanitize: true,
+      smartLists: true,
+      smartypants: false,
+      emoji: renderEmoji,
+      renderer: new MdRenderer(defaultOpts)
+  }
+
   var getMsg = memo({cache: lru(100)}, getMsgWithValue, sbot)
   var getAbout = memo({cache: lru(100)}, require('./lib/about'), sbot)
 
@@ -80,19 +93,6 @@ exports.init = function (sbot, config) {
       console.log("serving feed: " + feedId)
 
       var opts = defaultOpts
-
-      opts.marked = {
-	  gfm: true,
-	  mentions: true,
-	  tables: true,
-	  breaks: true,
-	  pedantic: false,
-	  sanitize: true,
-	  smartLists: true,
-	  smartypants: false,
-	  emoji: renderEmoji,
-	  renderer: new MdRenderer(opts)
-      }
 
       getAbout(feedId, function (err, about) {
 	  if (err) return cb(err)
@@ -162,19 +162,6 @@ exports.init = function (sbot, config) {
   function serveFeeds(req, res, following, channelSubscriptions, feedId, name) {
       var opts = defaultOpts
       
-      opts.marked = {
-	  gfm: true,
-	  mentions: true,
-	  tables: true,
-	  breaks: true,
-	  pedantic: false,
-	  sanitize: true,
-	  smartLists: true,
-	  smartypants: false,
-	  emoji: renderEmoji,
-	  renderer: new MdRenderer(opts)
-      }
-
       pull(
 	  sbot.createLogStream({ reverse: true, limit: 2500 }),
 	  pull.filter((msg) => {
@@ -208,19 +195,6 @@ exports.init = function (sbot, config) {
 
       var opts = defaultOpts
       
-      opts.marked = {
-	  gfm: true,
-	  mentions: true,
-	  tables: true,
-	  breaks: true,
-	  pedantic: false,
-	  sanitize: true,
-	  smartLists: true,
-	  smartypants: false,
-	  emoji: renderEmoji,
-	  renderer: new MdRenderer(opts)
-      }
-
       pull(
 	  sbot.query.read({ limit: 500, reverse: true, query: [{$filter: { value: { content: { channel: channelId }}}}]}),
 	  pull.collect(function (err, logs) {
