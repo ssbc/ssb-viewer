@@ -92,8 +92,6 @@ exports.init = function (sbot, config) {
   function serveFeed(req, res, feedId) {
       console.log("serving feed: " + feedId)
 
-      var opts = defaultOpts
-
       getAbout(feedId, function (err, about) {
 	  if (err) return cb(err)
 
@@ -109,7 +107,7 @@ exports.init = function (sbot, config) {
 		      paramap(addAuthorAbout, 8),
 		      paramap(addFollowAbout, 8),
 		      paramap(addVoteMessage, 8),
-		      pull(renderThread(opts), wrapPage(about.name)),
+		      pull(renderThread(defaultOpts), wrapPage(about.name)),
 		      toPull(res, function (err) {
 			  if (err) console.error('[viewer]', err)
 		      })
@@ -160,8 +158,6 @@ exports.init = function (sbot, config) {
   }
 
   function serveFeeds(req, res, following, channelSubscriptions, feedId, name) {
-      var opts = defaultOpts
-      
       pull(
 	  sbot.createLogStream({ reverse: true, limit: 2500 }),
 	  pull.filter((msg) => {
@@ -180,7 +176,7 @@ exports.init = function (sbot, config) {
 		  paramap(addAuthorAbout, 8),
 		  paramap(addFollowAbout, 8),
 		  paramap(addVoteMessage, 8),
-		  pull(renderThread(opts), wrapPage(name)),
+		  pull(renderThread(defaultOpts), wrapPage(name)),
 		  toPull(res, function (err) {
 		      if (err) console.error('[viewer]', err)
 		  })
@@ -192,8 +188,6 @@ exports.init = function (sbot, config) {
   function serveChannel(req, res, url) {
       var channelId = url.substring(url.lastIndexOf('channel/')+8, 100)
       console.log("serving channel: " + channelId)
-
-      var opts = defaultOpts
       
       pull(
 	  sbot.query.read({ limit: 500, reverse: true, query: [{$filter: { value: { content: { channel: channelId }}}}]}),
@@ -206,35 +200,13 @@ exports.init = function (sbot, config) {
 		  pull.values(logs),
 		  paramap(addAuthorAbout, 8),
 		  paramap(addVoteMessage, 8),
-		  pull(renderThread(opts), wrapPage('#' + channelId)),
+		  pull(renderThread(defaultOpts), wrapPage('#' + channelId)),
 		  toPull(res, function (err) {
 		      if (err) console.error('[viewer]', err)
 		  })
 	      )
 	  })
       )
-  }
-
-  function addFollowAbout(msg, cb) {
-      if (msg.value.content.contact)
-	  getAbout(msg.value.content.contact, function (err, about) {
-	      if (err) return cb(err)
-	      msg.value.content.contactAbout = about
-	      cb(null, msg)
-	  })
-      else
-	  cb(null, msg)
-  }
-
-  function addVoteMessage(msg, cb) {
-      if (msg.value.content.type == 'vote' && msg.value.content.vote.link[0] == '%')
-	  getMsg(msg.value.content.vote.link, function (err, linkedMsg) {
-	      if (linkedMsg)
-		  msg.value.content.vote.linkedText = linkedMsg.value.content.text
-	      cb(null, msg)
-	  })
-      else
-	  cb(null, msg)
   }
 
   function serveId(req, res, id, ext, query) {
@@ -293,6 +265,28 @@ exports.init = function (sbot, config) {
         )
       })
     )
+  }
+
+  function addFollowAbout(msg, cb) {
+      if (msg.value.content.contact)
+	  getAbout(msg.value.content.contact, function (err, about) {
+	      if (err) return cb(err)
+	      msg.value.content.contactAbout = about
+	      cb(null, msg)
+	  })
+      else
+	  cb(null, msg)
+  }
+
+  function addVoteMessage(msg, cb) {
+      if (msg.value.content.type == 'vote' && msg.value.content.vote.link[0] == '%')
+	  getMsg(msg.value.content.vote.link, function (err, linkedMsg) {
+	      if (linkedMsg)
+		  msg.value.content.vote.linkedText = linkedMsg.value.content.text
+	      cb(null, msg)
+	  })
+      else
+	  cb(null, msg)
   }
 
   function addAuthorAbout(msg, cb) {
