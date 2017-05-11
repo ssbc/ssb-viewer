@@ -120,25 +120,29 @@ exports.init = function (sbot, config) {
 	  renderer: new MdRenderer(opts)
       }
 
-      pull(
-	  sbot.createUserStream({ id: feedId, reverse: true }),
-	  pull.collect(function (err, logs) {
-	      if (err) return respond(res, 500, err.stack || err)
-	      res.writeHead(200, {
-		  'Content-Type': ctype("html")
-	      })
-	      pull(
-		  pull.values(logs),
-		  paramap(addAuthorAbout, 8),
-		  paramap(addFollowAbout, 8),
-		  paramap(addVoteMessage, 8),
-		  pull(renderThread(opts), wrapPage(feedId)),
-		  toPull(res, function (err) {
-		      if (err) console.error('[viewer]', err)
+      getAbout(feedId, function (err, about) {
+	  if (err) return cb(err)
+
+	  pull(
+	      sbot.createUserStream({ id: feedId, reverse: true }),
+	      pull.collect(function (err, logs) {
+		  if (err) return respond(res, 500, err.stack || err)
+		  res.writeHead(200, {
+		      'Content-Type': ctype("html")
 		  })
-	      )
-	  })
-      )
+		  pull(
+		      pull.values(logs),
+		      paramap(addAuthorAbout, 8),
+		      paramap(addFollowAbout, 8),
+		      paramap(addVoteMessage, 8),
+		      pull(renderThread(opts), wrapPage(about.name)),
+		      toPull(res, function (err) {
+			  if (err) console.error('[viewer]', err)
+		      })
+		  )
+	      })
+	  )
+      })
   }
 
   function serveUserFeed(req, res, url) {
@@ -148,38 +152,40 @@ exports.init = function (sbot, config) {
       var following = []
       var channelSubscriptions = []
       
-      pull(
-	  sbot.createUserStream({ id: feedId }),
-	  pull.filter((msg) => {
-	      return !msg.value ||
-		  msg.value.content.type == 'contact' ||
-		  (msg.value.content.type == 'channel' &&
-		   typeof msg.value.content.subscribed != 'undefined')
-	  }),
-	  pull.collect(function (err, msgs) {
-	      msgs.forEach((msg) => {
-		  if (msg.value.content.type == 'contact')
-		  {
-		      if (msg.value.content.following)
-			  following[msg.value.content.contact] = 1
-		      else
-			  delete following[msg.value.content.contact]
-		  }
-		  else // channel subscription
-		  {
-		      if (msg.value.content.subscribed)
-			  channelSubscriptions[msg.value.content.channel] = 1
-		      else
-			  delete following[msg.value.content.channel]
-		  }
+      getAbout(feedId, function (err, about) {
+	  pull(
+	      sbot.createUserStream({ id: feedId }),
+	      pull.filter((msg) => {
+		  return !msg.value ||
+		      msg.value.content.type == 'contact' ||
+		      (msg.value.content.type == 'channel' &&
+		       typeof msg.value.content.subscribed != 'undefined')
+	      }),
+	      pull.collect(function (err, msgs) {
+		  msgs.forEach((msg) => {
+		      if (msg.value.content.type == 'contact')
+		      {
+			  if (msg.value.content.following)
+			      following[msg.value.content.contact] = 1
+			  else
+			      delete following[msg.value.content.contact]
+		      }
+		      else // channel subscription
+		      {
+			  if (msg.value.content.subscribed)
+			      channelSubscriptions[msg.value.content.channel] = 1
+			  else
+			      delete following[msg.value.content.channel]
+		      }
+		  })
+		  
+		  serveFeeds(req, res, following, channelSubscriptions, feedId, 'user feed ' + about.name)
 	      })
-	      
-	      serveFeeds(req, res, following, channelSubscriptions, feedId)
-	  })
-      )
+	  )
+      })
   }
 
-  function serveFeeds(req, res, following, channelSubscriptions, feedId) {
+  function serveFeeds(req, res, following, channelSubscriptions, feedId, name) {
       var opts = defaultOpts
       
       opts.marked = {
@@ -213,7 +219,7 @@ exports.init = function (sbot, config) {
 		  paramap(addAuthorAbout, 8),
 		  paramap(addFollowAbout, 8),
 		  paramap(addVoteMessage, 8),
-		  pull(renderThread(opts), wrapPage(feedId)),
+		  pull(renderThread(opts), wrapPage(name)),
 		  toPull(res, function (err) {
 		      if (err) console.error('[viewer]', err)
 		  })
@@ -252,7 +258,7 @@ exports.init = function (sbot, config) {
 		  pull.values(logs),
 		  paramap(addAuthorAbout, 8),
 		  paramap(addVoteMessage, 8),
-		  pull(renderThread(opts), wrapPage(channelId)),
+		  pull(renderThread(opts), wrapPage('#' + channelId)),
 		  toPull(res, function (err) {
 		      if (err) console.error('[viewer]', err)
 		  })
@@ -481,7 +487,7 @@ function renderThread(opts) {
 function wrapPage(id) {
   return wrap('<!doctype html><html><head>'
     + '<meta charset=utf-8>'
-    + '<title>' + id + '</title>'
+    + '<title>' + id + ' | ssb-viewer</title>'
     + '<meta name=viewport content="width=device-width,initial-scale=1">'
     + '<link rel=stylesheet href="/static/base.css">'
     + '<link rel=stylesheet href="/static/nicer.css">'
