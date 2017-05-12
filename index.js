@@ -177,6 +177,7 @@ exports.init = function (sbot, config) {
 		  paramap(addAuthorAbout, 8),
 		  paramap(addFollowAbout, 8),
 		  paramap(addVoteMessage, 8),
+		  paramap(addGitLinks, 8),
 		  pull(renderThread(defaultOpts), wrapPage(name)),
 		  toPull(res, function (err) {
 		      if (err) console.error('[viewer]', err)
