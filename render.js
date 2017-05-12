@@ -391,7 +391,6 @@ function render(opts, c) {
     return '<span class="status">' +
       "Created a git issue" + (c.repoName != undefined ? " in repo " + c.repoName : "") + renderPost(opts, c) +
       '</span>';
-      //renderDefault(c);
   }
   else if (c.type == "git-update") {
     return '<span class="status">' +
@@ -408,9 +407,8 @@ function render(opts, c) {
   }
   else if (c.type == "pub") {
     return '<span class="status">' +
-      "Connected to a pub" +
-      '</span>' +
-      renderDefault(c);
+      "Connected to the pub " + c.address.host +
+      '</span>'
   }
   else if (c.type == "channel" && c.subscribed)
     return '<span class="status">' +
