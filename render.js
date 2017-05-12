@@ -432,7 +432,7 @@ function render(opts, c) {
 }
 
 function renderPost(opts, c) {
-  return '<section>' + marked(c.text, opts.marked) + "</section>";
+  return '<section>' + marked(String(c.text), opts.marked) + "</section>";
 }
 
 function renderDefault(c) {
