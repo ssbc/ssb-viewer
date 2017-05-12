@@ -15,7 +15,8 @@ var {
     renderEmoji,
     formatMsgs,
     wrapPage,
-    renderThread
+    renderThread,
+    renderAbout
 } = require('./render');
 
 var appHash = hash([fs.readFileSync(__filename)])
@@ -108,7 +109,7 @@ exports.init = function (sbot, config) {
 		      paramap(addFollowAbout, 8),
 		      paramap(addVoteMessage, 8),
 		      paramap(addGitLinks, 8),
-		      pull(renderThread(defaultOpts), wrapPage(about.name)),
+		      pull(renderAbout(defaultOpts, about), wrapPage(about.name)),
 		      toPull(res, function (err) {
 			  if (err) console.error('[viewer]', err)
 		      })

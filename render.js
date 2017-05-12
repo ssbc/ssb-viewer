@@ -12,6 +12,7 @@ exports.MdRenderer = MdRenderer;
 exports.renderEmoji = renderEmoji;
 exports.formatMsgs = formatMsgs;
 exports.renderThread = renderThread;
+exports.renderAbout = renderAbout;
 
 function MdRenderer(opts) {
   marked.Renderer.call(this, {});
@@ -92,6 +93,30 @@ function wrap(before, after) {
   return function(read) {
     return cat([pull.once(before), read, pull.once(after)]);
   };
+}
+
+function renderAbout(opts, about) {
+  return pull(
+    pull.map(renderMsg.bind(this, opts)),
+    wrap(
+      '<span class="top-tip">You are reading content from ' +
+        '<a href="https://www.scuttlebutt.nz">Scuttlebutt</a>' +
+      '</span>' +
+      '<main>' +
+      '<article><header><figure>' +
+      '<img src="' + opts.img_base + escape(about.image) + '" ' +
+            'height="200" width="200"><figcaption>' +
+	    'Feed of ' + about.name + '<br/>' +
+	    (about.description != undefined ? 
+	     marked(about.description, opts.marked) : '') +
+	    '</figcaption></figure></header></article>', 
+
+      '</main>' +
+      '<a class="call-to-action" href="https://www.scuttlebutt.nz">' +
+        'Join Scuttlebutt now' +
+      '</a>'
+    )
+  );
 }
 
 function renderThread(opts) {
