@@ -389,15 +389,16 @@ function render(opts, c) {
   }
   else if (c.type == "issue") {
     return '<span class="status">' +
-      "Created a git issue" +
-      '</span>' +
-      renderDefault(c);
+      "Created a git issue" + (c.repoName != undefined ? " in repo " + c.repoName : "") + renderPost(opts, c) +
+      '</span>';
+      //renderDefault(c);
   }
   else if (c.type == "git-update") {
     return '<span class="status">' +
-      "Did a git update" +
-      '</span>' +
-      renderDefault(c);
+      "Did a git update " + (c.repoName != undefined ? " in repo " + c.repoName : "") +
+      "<br/>" +
+     (c.commits != undefined ? c.commits.map(com => { return "-" +com.title; }).join("<br/>") : "") +
+      '</span>'
   }
   else if (c.type == "ssb-dns") {
     return '<span class="status">' +

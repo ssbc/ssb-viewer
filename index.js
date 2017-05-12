@@ -107,6 +107,7 @@ exports.init = function (sbot, config) {
 		      paramap(addAuthorAbout, 8),
 		      paramap(addFollowAbout, 8),
 		      paramap(addVoteMessage, 8),
+		      paramap(addGitLinks, 8),
 		      pull(renderThread(defaultOpts), wrapPage(about.name)),
 		      toPull(res, function (err) {
 			  if (err) console.error('[viewer]', err)
@@ -295,6 +296,23 @@ exports.init = function (sbot, config) {
       msg.author = about
       cb(null, msg)
     })
+  }
+
+  function addGitLinks(msg, cb) {
+      if (msg.value.content.type == 'git-update')
+	  getMsg(msg.value.content.repo, function (err, gitRepo) {
+	      if (gitRepo)
+		  msg.value.content.repoName = gitRepo.value.content.name
+	      cb(null, msg)
+	  })
+      else if (msg.value.content.type == 'issue')
+	  getMsg(msg.value.content.project, function (err, gitRepo) {
+	      if (gitRepo)
+		  msg.value.content.repoName = gitRepo.value.content.name
+	      cb(null, msg)
+	  })
+      else
+	  cb(null, msg)
   }
 }
 
