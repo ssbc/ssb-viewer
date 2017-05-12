@@ -148,7 +148,7 @@ exports.init = function (sbot, config) {
 			  if (msg.value.content.subscribed)
 			      channelSubscriptions[msg.value.content.channel] = 1
 			  else
-			      delete following[msg.value.content.channel]
+			      delete channelSubscriptions[msg.value.content.channel]
 		      }
 		  })
 		  
