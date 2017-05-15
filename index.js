@@ -94,7 +94,7 @@ exports.init = function (sbot, config) {
       console.log("serving feed: " + feedId)
 
       getAbout(feedId, function (err, about) {
-	  if (err) return cb(err)
+        if (err) return respond(res, 500, err.stack || err)
 
 	  pull(
 	      sbot.createUserStream({ id: feedId, reverse: true }),
