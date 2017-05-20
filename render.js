@@ -95,7 +95,7 @@ function wrap(before, after) {
   };
 }
 
-function renderAbout(opts, about) {
+function renderAbout(opts, about, showAllHTML = "") {
   return pull(
     pull.map(renderMsg.bind(this, opts)),
     wrap(
@@ -111,7 +111,7 @@ function renderAbout(opts, about) {
 	     marked(about.description, opts.marked) : '') +
 	    '</figcaption></figure></header></article>', 
 
-      '</main>' +
+      showAllHTML + '</main>' +
       '<a class="call-to-action" href="https://www.scuttlebutt.nz">' +
         'Join Scuttlebutt now' +
       '</a>'
@@ -119,7 +119,7 @@ function renderAbout(opts, about) {
   );
 }
 
-function renderThread(opts) {
+function renderThread(opts, showAllHTML = "") {
   return pull(
     pull.map(renderMsg.bind(this, opts)),
     wrap(
@@ -128,7 +128,7 @@ function renderThread(opts) {
       '</span>' +
       '<main>',
 
-      '</main>' +
+      showAllHTML + '</main>' +
       '<a class="call-to-action" href="https://www.scuttlebutt.nz">' +
         'Join Scuttlebutt now' +
       '</a>'
