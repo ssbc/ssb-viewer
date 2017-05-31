@@ -331,7 +331,7 @@ function renderMsg(opts, msg) {
             escape(msg.value.author) +
             '"' +
             ">" + msg.author.name + "</a>" +
-            msgTimestamp(msg, name) +
+            msgTimestamp(msg, opts.base + name) +
           '</figcaption>' +
         '</figure>' +
       '</header>' +
@@ -340,13 +340,13 @@ function renderMsg(opts, msg) {
   );
 }
 
-function msgTimestamp(msg, name) {
+function msgTimestamp(msg, link) {
   var date = new Date(msg.value.timestamp);
   var isoStr = date.toISOString();
   return (
     '<time class="ssb-timestamp" datetime="' + isoStr + '">' +
       '<a ' +
-      'href="#' + name + '" ' +
+      'href="' + link + '" ' +
       'title="' + isoStr + '" ' +
       '>' + formatDate(date) + '</a>' +
     '</time>'
