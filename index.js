@@ -253,7 +253,7 @@ exports.init = function (sbot, config) {
     if (format === null) return respond(res, 415, 'Invalid format')
 
     pull(
-      sbot.links({dest: id, values: true, rel: 'root'}),
+      sbot.links({dest: id, values: true }),
       includeRoot && prepend(getMsg, id),
       pull.unique('key'),
       pull.collect(function (err, links) {
