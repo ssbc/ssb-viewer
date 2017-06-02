@@ -29,6 +29,7 @@ MdRenderer.prototype.urltransform = function(href) {
     case "%":
       return this.opts.msg_base + encodeURIComponent(href);
     case "@":
+      href = this.opts.mentions[href.substr(1)] || href;
       return this.opts.feed_base + encodeURIComponent(href);
     case "&":
       return this.opts.blob_base + encodeURIComponent(href);
@@ -53,11 +54,14 @@ MdRenderer.prototype.image = function(href, title, text) {
 
 function renderEmoji(emoji) {
   var opts = this.renderer.opts;
-  return emoji in emojis
+  var mentions = opts.mentions;
+  var url = mentions[emoji]
+    ? opts.blob_base + encodeURIComponent(mentions[emoji])
+    : emoji in emojis && opts.emoji_base + escape(emoji) + '.png';
+  return url
     ? '<img src="' +
-        opts.emoji_base +
-        escape(emoji) +
-        '.png"' +
+        url +
+        '"' +
         ' alt=":' +
         escape(emoji) +
         ':"' +
@@ -455,6 +459,10 @@ function render(opts, c) {
 }
 
 function renderPost(opts, c) {
+  opts.mentions = {};
+  if (Array.isArray(c.mentions)) c.mentions.forEach(function (link) {
+    if (link && link.name && link.link) opts.mentions[link.name] = link.link;
+  });
   return '<section>' + marked(String(c.text), opts.marked) + "</section>";
 }
 
