@@ -437,7 +437,7 @@ function renderRss(opts, msg) {
 
   return (
     '<item>' +
-      '<title>' + msg.author.name + ' - ' + formatDate(new Date(msg.value.timestamp)) + '</title>' +
+      '<title>' + msg.author.name + '</title>' +
       '<description><![CDATA[' + content + ']]></description>' +
       '<link>' + opts.base + escape(name) + '</link>' +
       '<pubDate>' + new Date(msg.value.timestamp).toUTCString() + '</pubDate>' +
