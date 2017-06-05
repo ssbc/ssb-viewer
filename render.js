@@ -4,6 +4,7 @@ var marked = require("ssb-marked");
 var htime = require("human-time");
 var emojis = require("emoji-named-characters");
 var cat = require("pull-cat");
+var h = require('hyperscript');
 
 var emojiDir = path.join(require.resolve("emoji-named-characters"), "../pngs");
 
@@ -39,17 +40,11 @@ MdRenderer.prototype.urltransform = function(href) {
 };
 
 MdRenderer.prototype.image = function(href, title, text) {
-  return (
-    '<img src="' +
-    this.opts.img_base +
-    escape(href) +
-    '"' +
-    ' alt="' +
-    text +
-    '"' +
-    (title ? ' title="' + title + '"' : "") +
-    (this.options.xhtml ? "/>" : ">")
-  );
+  return h('img',
+	   { src: this.opts.img_base + href,
+	     alt: text,
+	     title: title
+	   }).outerHTML;
 };
 
 function renderEmoji(emoji) {
@@ -59,16 +54,12 @@ function renderEmoji(emoji) {
     ? opts.blob_base + encodeURIComponent(mentions[emoji])
     : emoji in emojis && opts.emoji_base + escape(emoji) + '.png';
   return url
-    ? '<img src="' +
-        url +
-        '"' +
-        ' alt=":' +
-        escape(emoji) +
-        ':"' +
-        ' title=":' +
-        escape(emoji) +
-        ':"' +
-        ' class="ssb-emoji" height="16" width="16">'
+	? h('img.ssb-emoji',
+	    { src: url,
+	      alt: ':' + escape(emoji) + ':',
+	      title: ':' + escape(emoji) + ':',
+	      height: 16, width: 16
+	    }).outerHTML
     : ":" + emoji + ":";
 }
 
@@ -99,44 +90,46 @@ function wrap(before, after) {
   };
 }
 
+function callToAction() {
+  return h('a.call-to-action',
+	   { href: 'https://www.scuttlebutt.nz' },
+	   'Join Scuttlebutt now').outerHTML;
+}
+
+function toolTipTop() {
+  return h('span.top-tip',
+	   'You are reading content from ',
+	   h('a', { href: 'https://www.scuttlebutt.nz' },
+	     'Scuttlebutt')).outerHTML;
+}
+
 function renderAbout(opts, about, showAllHTML = "") {
+  var figCaption = h('figcaption');
+  figCaption.innerHTML = 'Feed of ' + about.name + '<br>' +
+	(about.description != undefined ? 
+	 marked(about.description, opts.marked) : '');
   return pull(
     pull.map(renderMsg.bind(this, opts)),
-    wrap(
-      '<span class="top-tip">You are reading content from ' +
-        '<a href="https://www.scuttlebutt.nz">Scuttlebutt</a>' +
-      '</span>' +
-      '<main>' +
-      '<article><header><figure>' +
-      '<img src="' + opts.img_base + escape(about.image) + '" ' +
-            'height="200" width="200"><figcaption>' +
-	    'Feed of ' + about.name + '<br/>' +
-	    (about.description != undefined ? 
-	     marked(about.description, opts.marked) : '') +
-	    '</figcaption></figure></header></article>', 
-
-      showAllHTML + '</main>' +
-      '<a class="call-to-action" href="https://www.scuttlebutt.nz">' +
-        'Join Scuttlebutt now' +
-      '</a>'
-    )
+    wrap(toolTipTop() + '<main>' +
+	 h('article',
+	   h('header',
+	     h('figure',
+	       h('img',
+		 { src: opts.img_base + about.image,
+		   height: 200,
+		   width: 200
+		 }),
+	       figCaption)
+	    )).outerHTML,
+	 showAllHTML + '</main>' + callToAction())
   );
 }
 
 function renderThread(opts, showAllHTML = "") {
   return pull(
     pull.map(renderMsg.bind(this, opts)),
-    wrap(
-      '<span class="top-tip">You are reading content from ' +
-        '<a href="https://www.scuttlebutt.nz">Scuttlebutt</a>' +
-      '</span>' +
-      '<main>',
-
-      showAllHTML + '</main>' +
-      '<a class="call-to-action" href="https://www.scuttlebutt.nz">' +
-        'Join Scuttlebutt now' +
-      '</a>'
-    )
+    wrap(toolTipTop() + '<main>', 
+	 showAllHTML + '</main>' + callToAction())
   );
 }
 
@@ -320,45 +313,32 @@ function docWrite(str) {
 function renderMsg(opts, msg) {
   var c = msg.value.content || {};
   var name = encodeURIComponent(msg.key);
-  return (
-    '<article id="' +
-    name +
-    '">' +
-      '<header>' +
-        '<figure>' +
-          '<img alt="" ' +
-            'src="' + opts.img_base + escape(msg.author.image) + '" ' +
-            'height="50" width="50">' +
-          '<figcaption>' +
-            '<a class="ssb-avatar-name"' +
-            ' href="' + opts.base +
-            escape(msg.value.author) +
-            '"' +
-            ">" + msg.author.name + "</a>" +
-            msgTimestamp(msg, opts.base + name) +
-          '</figcaption>' +
-        '</figure>' +
-      '</header>' +
-      render(opts, c) +
-    "</article>"
-  );
+  return h('article#' + name,
+	   h('header',
+	     h('figure',
+	       h('img', { alt: '',
+			  src: opts.img_base + msg.author.image,
+			  height: 50, width: 50 }),
+	       h('figcaption',
+		 h('a.ssb-avatar-name',
+		   { href: opts.base + escape(msg.value.author) },
+		   msg.author.name),
+		 msgTimestamp(msg, opts.base + name)))),
+	   render(opts, c)).outerHTML;
 }
 
 function msgTimestamp(msg, link) {
   var date = new Date(msg.value.timestamp);
   var isoStr = date.toISOString();
-  return (
-    '<time class="ssb-timestamp" datetime="' + isoStr + '">' +
-      '<a ' +
-      'href="' + link + '" ' +
-      'title="' + isoStr + '" ' +
-      '>' + formatDate(date) + '</a>' +
-    '</time>'
-  );
+  return h('time.ssb-timestamp',
+	   { datetime: isoStr },
+	   h('a',
+	     { href: link,
+	       title: isoStr },
+	     formatDate(date)));
 }
 
 function formatDate(date) {
-  // return date.toISOString().replace('T', ' ')
   return htime(date);
 }
 
@@ -366,106 +346,102 @@ function render(opts, c) {
   var base = opts.base;
   if (c.type === "post") {
     var channel = c.channel
-      ? '<div class="top-right"><a href="' + base + 'channel/' + c.channel + '">#' + c.channel + "</a></div>"
-      : "";
-    return channel + renderPost(opts, c);
+	? h('div.top-right',
+	    h('a',
+	      { href: base + 'channel/' + c.channel },
+	      '#' + c.channel))
+	: "";
+    return [channel, renderPost(opts, c)];
   } else if (c.type == "vote" && c.vote.expression == "Dig") {
     var channel = c.channel
-      ? ' in <a href="' + base + 'channel/' + c.channel + '">#' + c.channel + "</a>"
-      : "";
+	? [' in ',
+	   h('a',
+	     { href: base + 'channel/' + c.channel },
+	     '#' + c.channel)]
+	: "";
     var linkedText = "this";
     if (typeof c.vote.linkedText != "undefined")
-      linkedText = c.vote.linkedText.substring(0, 75);
-    return ('<span class="status">' +
-      'Liked ' +
-      '<a href="' + base +
-      c.vote.link +
-      '">' +
-      linkedText +
-      "</a>" +
-      channel +
-      '</span>'
-    );
+	linkedText = c.vote.linkedText.substring(0, 75);
+    return h('span.status',
+	     ['Liked ',
+	      h('a', { href: base + c.vote.link }, linkedText),
+	      channel]);
   } else if (c.type == "vote") {
     var linkedText = "this";
     if (typeof c.vote.linkedText != "undefined")
       linkedText = c.vote.linkedText.substring(0, 75);
-    return '<span class="status">' +
-      'Voted <a href="' + base + c.vote.link + '">' + linkedText + "</a>" +
-      '</span>';
+      return h('span.status',
+	       ['Voted ',
+		h('a', { href: base + c.vote.link }, linkedText)]);
   } else if (c.type == "contact" && c.following) {
     var name = c.contact;
-    if (typeof c.contactAbout != "undefined") name = c.contactAbout.name;
-    return '<span class="status">' +
-      'Followed <a href="' + base + c.contact + '">' + name + "</a>" +
-      '</span>';
+    if (typeof c.contactAbout != "undefined")
+	name = c.contactAbout.name;
+    return h('span.status',
+	     ['Followed ',
+	      h('a', { href: base + c.contact }, name)]);
   } else if (c.type == "contact" && !c.following) {
     var name = c.contact;
-    if (typeof c.contactAbout != "undefined") name = c.contactAbout.name;
-    return '<span class="status">' +
-      'Unfollowed <a href="' + base + c.contact + '">' + name + "</a>" +
-      '</span>';
+    if (typeof c.contactAbout != "undefined")
+	name = c.contactAbout.name;
+    return h('span.status',
+	     ['Unfollowed ',
+	      h('a', { href: base + c.contact }, name)]);
   } else if (typeof c == "string") {
-    return '<span class="status">' +
-      "Wrote something private" +
-      '</span>';
+    return h('span.status', 'Wrote something private')
   }
   else if (c.type == "about") {
-    return '<span class="status">' +
-      "Changed something in about" +
-      '</span>' +
-      renderDefault(c);
+    return [h('span.status', 'Changed something in about'),
+ 	    renderDefault(c)];
   }
   else if (c.type == "issue") {
-    return '<span class="status">' +
-      "Created a git issue" + (c.repoName != undefined ? " in repo " + c.repoName : "") + renderPost(opts, c) +
-      '</span>';
+    return [h('span.status',
+	     "Created a git issue" +
+	      (c.repoName != undefined ? " in repo " + c.repoName : ""),
+	      renderPost(opts, c))];
   }
   else if (c.type == "git-update") {
-    return '<span class="status">' +
-      "Did a git update " + (c.repoName != undefined ? " in repo " + c.repoName : "") +
-      "<br/>" +
-     (c.commits != undefined ? c.commits.map(com => { return "-" +com.title; }).join("<br/>") : "") +
-      '</span>'
+    return h('span.status',
+	     "Did a git update " +
+	     (c.repoName != undefined ? " in repo " + c.repoName : "") +
+	     '<br>' +
+	     (c.commits != undefined ?
+	      c.commits.map(com => { return "-" +com.title; }).join('<br>') : ""));
   }
   else if (c.type == "ssb-dns") {
-    return '<span class="status">' +
-      "Updated DNS" +
-      '</span>' +
-      renderDefault(c);
+    return [h('span.status', 'Updated DNS'), renderDefault(c)];
   }
   else if (c.type == "pub") {
-    return '<span class="status">' +
-      "Connected to the pub " + c.address.host +
-      '</span>'
+    return h('span.status', 'Connected to the pub ' + c.address.host);
   }
   else if (c.type == "channel" && c.subscribed)
-    return '<span class="status">' +
-      'Subscribed to channel <a href="' + base + 'channel/' +
-      c.channel +
-      '">#' +
-      c.channel +
-      "</a>" +
-      '</span>';
+    return h('span.status',
+	     'Subscribed to channel ',
+	     h('a',
+	       { href: base + 'channel/' + c.channel },
+	       '#' + c.channel));
   else if (c.type == "channel" && !c.subscribed)
-    return '<span class="status">' +
-      'Unsubscribed from channel <a href="' + base + 'channel/' +
-      c.channel +
-      '">#' +
-      c.channel +
-      "</a>" +
-      '</span>';
+    return h('span.status',
+	     'Unsubscribed from channel ',
+	     h('a',
+	       { href: base + 'channel/' + c.channel },
+	       '#' + c.channel))
   else return renderDefault(c);
 }
 
 function renderPost(opts, c) {
   opts.mentions = {};
-  if (Array.isArray(c.mentions)) c.mentions.forEach(function (link) {
-    if (link && link.name && link.link) opts.mentions[link.name] = link.link;
-  });
-  return '<section>' + marked(String(c.text), opts.marked) + "</section>";
+  if (Array.isArray(c.mentions)) {
+      c.mentions.forEach(function (link) {
+	  if (link && link.name && link.link)
+	      opts.mentions[link.name] = link.link;
+      });
+  }
+  var s = h('section');
+  s.innerHTML = marked(String(c.text), opts.marked);
+  return s;
 }
 
 function renderDefault(c) {
-  return "<pre>" + JSON.stringify(c, 0, 2) + "</pre>";
+  return h('pre', JSON.stringify(c, 0, 2));
 }
