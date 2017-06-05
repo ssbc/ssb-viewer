@@ -16,7 +16,10 @@ var {
     formatMsgs,
     wrapPage,
     renderThread,
-    renderAbout
+    renderAbout,
+    renderItem,
+    wrapRss,
+    renderRssContent,
 } = require('./render');
 
 var appHash = hash([fs.readFileSync(__filename)])
@@ -90,7 +93,7 @@ exports.init = function (sbot, config) {
     }
   }
 
-  function serveFeed(req, res, feedId) {
+  function serveFeed(req, res, feedId, ext) {
       console.log("serving feed: " + feedId)
 
       var showAll = req.url.endsWith("?showAll")
@@ -99,26 +102,43 @@ exports.init = function (sbot, config) {
       getAbout(feedId, function (err, about) {
           if (err) return respond(res, 500, err.stack || err)
 
-	  pull(
-	      sbot.createUserStream({ id: feedId, reverse: true, limit: showAll ? -1 : 10 }),
-	      pull.collect(function (err, logs) {
-		  if (err) return respond(res, 500, err.stack || err)
-		  res.writeHead(200, {
-		      'Content-Type': ctype("html")
-		  })
-		  pull(
-		      pull.values(logs),
-		      paramap(addAuthorAbout, 8),
-		      paramap(addFollowAbout, 8),
-		      paramap(addVoteMessage, 8),
-		      paramap(addGitLinks, 8),
-		      pull(renderAbout(defaultOpts, about, showAllHTML), wrapPage(about.name)),
-		      toPull(res, function (err) {
-			  if (err) console.error('[viewer]', err)
-		      })
-		  )
-	      })
-	  )
+          function render() {
+            switch (ext) {
+              case 'rss':
+                return pull(
+                  // formatMsgs(feedId, ext, defaultOpts)
+                  pull.filter( (msg) => {
+                    return !!renderRssContent(defaultOpts, msg.value.content || {});
+                  }),
+                  renderItem(defaultOpts), wrapRss(about.name, defaultOpts)
+                );
+              default:
+                return pull(
+                  renderAbout(defaultOpts, about, showAllHTML), wrapPage(about.name)
+                );
+            }
+          }
+
+          pull(
+              sbot.createUserStream({ id: feedId, reverse: true, limit: showAll ? -1 : (ext == 'rss' ? 25 :10) }),
+              pull.collect(function (err, logs) {
+              if (err) return respond(res, 500, err.stack || err)
+              res.writeHead(200, {
+                  'Content-Type': ctype(ext)
+              })
+              pull(
+                  pull.values(logs),
+                  paramap(addAuthorAbout, 8),
+                  paramap(addFollowAbout, 8),
+                  paramap(addVoteMessage, 8),
+                  paramap(addGitLinks, 8),
+                  render(),
+                  toPull(res, function (err) {
+                    if (err) console.error('[viewer]', err)
+                  })
+              )
+              })
+          )
       })
   }
 
@@ -363,6 +383,7 @@ function ctype(name) {
     case 'js': return 'text/javascript'
     case 'css': return 'text/css'
     case 'json': return 'application/json'
+    case 'rss': return 'text/xml'
   }
 }
 

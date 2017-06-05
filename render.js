@@ -13,6 +13,9 @@ exports.renderEmoji = renderEmoji;
 exports.formatMsgs = formatMsgs;
 exports.renderThread = renderThread;
 exports.renderAbout = renderAbout;
+exports.renderItem = renderItem;
+exports.wrapRss = wrapRss;
+exports.renderRssContent = renderRssContent;
 
 function MdRenderer(opts) {
   marked.Renderer.call(this, {});
@@ -84,6 +87,8 @@ function formatMsgs(id, ext, opts) {
       return pull(renderThread(opts), wrapJSEmbed(opts));
     case "json":
       return wrapJSON();
+    case "rss":
+      return pull(renderItem(opts), wrapRss(id, opts));
     default:
       return null;
   }
@@ -136,6 +141,12 @@ function renderThread(opts, showAllHTML = "") {
   );
 }
 
+function renderItem(opts) {
+  return pull(
+    pull.map(renderRss.bind(this, opts))
+  );
+}
+
 function wrapPage(id) {
   return wrap(
     "<!doctype html><html><head>" +
@@ -147,6 +158,18 @@ function wrapPage(id) {
       styles +
       "</head><body>",
     "</body></html>"
+  );
+}
+
+function wrapRss(id, opts) {
+  return wrap(
+    '<?xml version="1.0" encoding="UTF-8" ?>' +
+    '<rss version="2.0">' +
+      '<channel>' +
+        '<title>' + id + ' | ssb-viewer</title>',
+
+      '</channel>'+
+    '</rss>'
   );
 }
 
@@ -337,6 +360,89 @@ function renderMsg(opts, msg) {
       '</header>' +
       render(opts, c) +
     "</article>"
+  );
+}
+
+function renderRssContent(opts, c) {
+  var base = opts.base;
+  if (c.type === "post") {
+    return (c.channel ? `Posted in #${c.channel}:\n\n` : '') + c.text;
+  } else if (c.type == "vote" && c.vote.expression == "Dig") {
+    var linkedText = "a post";
+    if (typeof c.vote.linkedText != "undefined") {
+      linkedText = c.vote.linkedText.substring(0, 75);
+    }
+
+    return `Liked ${linkedText}`;
+  } else if (c.type == "vote") {
+    var linkedText = "a post";
+    if (typeof c.vote.linkedText != "undefined") {
+      linkedText = c.vote.linkedText.substring(0, 75);
+    }
+
+    return `Voted ${linkedText}`;
+  } else if (c.type == "contact" && c.following) {
+    var name = c.contact;
+    if (typeof c.contactAbout != "undefined") {
+      name = c.contactAbout.name;
+    }
+
+    return `Followed ${name}`;
+  } else if (c.type == "contact" && !c.following) {
+    var name = c.contact;
+    if (typeof c.contactAbout != "undefined") {
+      name = c.contactAbout.name;
+    }
+
+    return `Unfollowed ${name}`;
+  } else if (typeof c == "string") {
+    // Don't show private messages in RSS.
+  }
+  else if (c.type == "about") {
+    // Don't show about messages in RSS.
+  }
+  else if (c.type == "issue") {
+    return `Created a git issue ${(c.repoName != undefined ? " in repo " + c.repoName : "")}`;
+  }
+  else if (c.type == "git-update") {
+    return `Did a git update ${(c.repoName != undefined ? " in repo " + c.repoName : "")}
+    
+    ${(c.commits != undefined ? c.commits.map(com => { return "-" +com.title; }).join("\n") : "")}
+    `;
+  }
+  else if (c.type == "ssb-dns") {
+    // Don't show for RSS.
+  }
+  else if (c.type == "pub") {
+    return `Connected to the pub ${c.address.host}`;
+  }
+  else if (c.type == "channel" && c.subscribed) {
+    return `Subscribed to channel #${c.channel}`;
+  }
+  else if (c.type == "channel" && !c.subscribed) {
+    return `Unsubscribed from channel #${c.channel}`;
+  }
+
+}
+
+function renderRss(opts, msg) {
+  var c = msg.value.content || {};
+  var name = encodeURIComponent(msg.key);
+
+  let content = renderRssContent(opts, c);
+
+  if (!content) {
+    return null;
+  }
+
+  return (
+    '<item>' +
+      '<title>' + msg.author.name + ' - ' + formatDate(new Date(msg.value.timestamp)) + '</title>' +
+      '<description><![CDATA[' + content + ']]></description>' +
+      '<link>' + opts.base + escape(name) + '</link>' +
+      '<pubDate>' + new Date(msg.value.timestamp).toUTCString() + '</pubDate>' +
+      '<guid>' + msg.key + '</guid>' +
+    '</item>'
   );
 }
 
