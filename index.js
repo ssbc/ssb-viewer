@@ -17,7 +17,7 @@ var {
     wrapPage,
     renderThread,
     renderAbout,
-    renderItem,
+    renderRssItem,
     wrapRss,
     renderRssContent,
 } = require('./render');
@@ -110,7 +110,7 @@ exports.init = function (sbot, config) {
                   pull.filter( (msg) => {
                     return !!renderRssContent(defaultOpts, msg.value.content || {});
                   }),
-                  renderItem(defaultOpts), wrapRss(about.name, defaultOpts)
+                  renderRssItem(defaultOpts), wrapRss(about.name, defaultOpts)
                 );
               default:
                 return pull(

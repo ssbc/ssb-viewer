@@ -13,7 +13,7 @@ exports.renderEmoji = renderEmoji;
 exports.formatMsgs = formatMsgs;
 exports.renderThread = renderThread;
 exports.renderAbout = renderAbout;
-exports.renderItem = renderItem;
+exports.renderRssItem = renderRssItem;
 exports.wrapRss = wrapRss;
 exports.renderRssContent = renderRssContent;
 
@@ -88,7 +88,7 @@ function formatMsgs(id, ext, opts) {
     case "json":
       return wrapJSON();
     case "rss":
-      return pull(renderItem(opts), wrapRss(id, opts));
+      return pull(renderRssItem(opts), wrapRss(id, opts));
     default:
       return null;
   }
@@ -141,7 +141,7 @@ function renderThread(opts, showAllHTML = "") {
   );
 }
 
-function renderItem(opts) {
+function renderRssItem(opts) {
   return pull(
     pull.map(renderRss.bind(this, opts))
   );
