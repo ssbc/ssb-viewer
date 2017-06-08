@@ -14,6 +14,7 @@ exports.renderEmoji = renderEmoji;
 exports.formatMsgs = formatMsgs;
 exports.renderThread = renderThread;
 exports.renderAbout = renderAbout;
+exports.renderShowAll = renderShowAll;
 
 function MdRenderer(opts) {
   marked.Renderer.call(this, {});
@@ -444,4 +445,11 @@ function renderPost(opts, c) {
 
 function renderDefault(c) {
   return h('pre', JSON.stringify(c, 0, 2));
+}
+
+function renderShowAll(showAll, url) {
+    if (showAll)
+	return '';
+    else
+	return '<br>' + h('a', { href : url + '?showAll' }, 'Show whole feed').outerHTML;
 }

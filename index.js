@@ -16,7 +16,8 @@ var {
     formatMsgs,
     wrapPage,
     renderThread,
-    renderAbout
+    renderAbout,
+    renderShowAll
 } = require('./render');
 
 var appHash = hash([fs.readFileSync(__filename)])
@@ -93,8 +94,7 @@ exports.init = function (sbot, config) {
   function serveFeed(req, res, feedId) {
       console.log("serving feed: " + feedId)
 
-      var showAll = req.url.endsWith("?showAll")
-      var showAllHTML = showAll ? '' : '<br/><a href="' + req.url + '?showAll">Show whole feed</a>'
+      var showAll = req.url.endsWith("?showAll");
 
       getAbout(feedId, function (err, about) {
           if (err) return respond(res, 500, err.stack || err)
@@ -112,7 +112,9 @@ exports.init = function (sbot, config) {
 		      paramap(addFollowAbout, 8),
 		      paramap(addVoteMessage, 8),
 		      paramap(addGitLinks, 8),
-		      pull(renderAbout(defaultOpts, about, showAllHTML), wrapPage(about.name)),
+		      pull(renderAbout(defaultOpts, about,
+				       renderShowAll(showAll, req.url)),
+			   wrapPage(about.name)),
 		      toPull(res, function (err) {
 			  if (err) console.error('[viewer]', err)
 		      })
@@ -196,7 +198,6 @@ exports.init = function (sbot, config) {
       console.log("serving channel: " + channelId)
 
       var showAll = req.url.endsWith("?showAll")
-      var showAllHTML = showAll ? '' : '<br/><a href="' + req.url + '?showAll">Show whole feed</a>'
       
       pull(
 	  sbot.query.read({ limit: showAll ? 300 : 10, reverse: true, query: [{$filter: { value: { content: { channel: channelId }}}}]}),
@@ -209,7 +210,9 @@ exports.init = function (sbot, config) {
 		  pull.values(logs),
 		  paramap(addAuthorAbout, 8),
 		  paramap(addVoteMessage, 8),
-		  pull(renderThread(defaultOpts, showAllHTML), wrapPage('#' + channelId)),
+		  pull(renderThread(defaultOpts,
+				    renderShowAll(showAll, req.url)),
+		       wrapPage('#' + channelId)),
 		  toPull(res, function (err) {
 		      if (err) console.error('[viewer]', err)
 		  })
