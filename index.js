@@ -184,13 +184,13 @@ exports.init = function (sbot, config) {
 
   function serveFeeds(req, res, following, channelSubscriptions, feedId, name) {
       pull(
-	  sbot.createLogStream({ reverse: true, limit: 2500 }),
+	  sbot.createLogStream({ reverse: true, limit: 5000 }),
 	  pull.filter((msg) => {
 	      return !msg.value ||
 		  (msg.value.author in following ||
 		   msg.value.content.channel in channelSubscriptions)
 	  }),
-	  pull.take(100),
+	  pull.take(150),
 	  pull.collect(function (err, logs) {
 	      if (err) return respond(res, 500, err.stack || err)
 	      res.writeHead(200, {
@@ -273,7 +273,7 @@ exports.init = function (sbot, config) {
     if (format === null) return respond(res, 415, 'Invalid format')
 
     pull(
-      sbot.links({dest: id, values: true, rel: 'root'}),
+      sbot.links({dest: id, values: true }),
       includeRoot && prepend(getMsg, id),
       pull.unique('key'),
       pull.collect(function (err, links) {
