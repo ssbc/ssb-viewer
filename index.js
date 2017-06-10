@@ -107,9 +107,6 @@ exports.init = function (sbot, config) {
               case 'rss':
                 return pull(
                   // formatMsgs(feedId, ext, defaultOpts)
-                  pull.filter( (msg) => {
-                    return !!renderRssContent(defaultOpts, msg.value.content || {});
-                  }),
                   renderRssItem(defaultOpts), wrapRss(about.name, defaultOpts)
                 );
               default:
