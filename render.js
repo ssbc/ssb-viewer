@@ -354,7 +354,7 @@ function renderRss(opts, msg) {
   var c = msg.value.content || {};
   var name = encodeURIComponent(msg.key);
 
-  let content = render(opts, c);
+  let content = h('div', render(opts, c)).innerHTML;
 
   if (!content) {
     return null;
@@ -362,7 +362,7 @@ function renderRss(opts, msg) {
 
   return (
     '<item>' +
-      '<title>' + msg.author.name + ' | ' + c.type + '</title>' +
+      '<title>' + escape(msg.author.name + ' | ' + (c.type || 'private')) + '</title>' +
       '<description><![CDATA[' + content + ']]></description>' +
       '<link>' + opts.base + escape(name) + '</link>' +
       '<pubDate>' + new Date(msg.value.timestamp).toUTCString() + '</pubDate>' +
