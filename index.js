@@ -16,7 +16,10 @@ var {
     formatMsgs,
     wrapPage,
     renderThread,
-    renderAbout
+    renderAbout,
+    renderShowAll,
+    renderRssItem,
+    wrapRss,
 } = require('./render');
 
 var appHash = hash([fs.readFileSync(__filename)])
@@ -90,35 +93,49 @@ exports.init = function (sbot, config) {
     }
   }
 
-  function serveFeed(req, res, feedId) {
+  function serveFeed(req, res, feedId, ext) {
       console.log("serving feed: " + feedId)
 
-      var showAll = req.url.endsWith("?showAll")
-      var showAllHTML = showAll ? '' : '<br/><a href="' + req.url + '?showAll">Show whole feed</a>'
+      var showAll = req.url.endsWith("?showAll");
 
       getAbout(feedId, function (err, about) {
           if (err) return respond(res, 500, err.stack || err)
 
-	  pull(
-	      sbot.createUserStream({ id: feedId, reverse: true, limit: showAll ? -1 : 10 }),
-	      pull.collect(function (err, logs) {
-		  if (err) return respond(res, 500, err.stack || err)
-		  res.writeHead(200, {
-		      'Content-Type': ctype("html")
-		  })
-		  pull(
-		      pull.values(logs),
-		      paramap(addAuthorAbout, 8),
-		      paramap(addFollowAbout, 8),
-		      paramap(addVoteMessage, 8),
-		      paramap(addGitLinks, 8),
-		      pull(renderAbout(defaultOpts, about, showAllHTML), wrapPage(about.name)),
-		      toPull(res, function (err) {
-			  if (err) console.error('[viewer]', err)
-		      })
-		  )
-	      })
-	  )
+          function render() {
+            switch (ext) {
+              case 'rss':
+                return pull(
+                  // formatMsgs(feedId, ext, defaultOpts)
+                  renderRssItem(defaultOpts), wrapRss(about.name, defaultOpts)
+                );
+              default:
+                return pull(
+                  renderAbout(defaultOpts, about,
+                    renderShowAll(showAll, req.url)), wrapPage(about.name)
+                );
+            }
+          }
+
+          pull(
+              sbot.createUserStream({ id: feedId, reverse: true, limit: showAll ? -1 : (ext == 'rss' ? 25 :10) }),
+              pull.collect(function (err, logs) {
+              if (err) return respond(res, 500, err.stack || err)
+              res.writeHead(200, {
+                  'Content-Type': ctype(ext)
+              })
+              pull(
+                  pull.values(logs),
+                  paramap(addAuthorAbout, 8),
+                  paramap(addFollowAbout, 8),
+                  paramap(addVoteMessage, 8),
+                  paramap(addGitLinks, 8),
+                  render(),
+                  toPull(res, function (err) {
+                    if (err) console.error('[viewer]', err)
+                  })
+              )
+              })
+          )
       })
   }
 
@@ -196,7 +213,6 @@ exports.init = function (sbot, config) {
       console.log("serving channel: " + channelId)
 
       var showAll = req.url.endsWith("?showAll")
-      var showAllHTML = showAll ? '' : '<br/><a href="' + req.url + '?showAll">Show whole feed</a>'
       
       pull(
 	  sbot.query.read({ limit: showAll ? 300 : 10, reverse: true, query: [{$filter: { value: { content: { channel: channelId }}}}]}),
@@ -209,7 +225,9 @@ exports.init = function (sbot, config) {
 		  pull.values(logs),
 		  paramap(addAuthorAbout, 8),
 		  paramap(addVoteMessage, 8),
-		  pull(renderThread(defaultOpts, showAllHTML), wrapPage('#' + channelId)),
+		  pull(renderThread(defaultOpts,
+				    renderShowAll(showAll, req.url)),
+		       wrapPage('#' + channelId)),
 		  toPull(res, function (err) {
 		      if (err) console.error('[viewer]', err)
 		  })
@@ -363,6 +381,7 @@ function ctype(name) {
     case 'js': return 'text/javascript'
     case 'css': return 'text/css'
     case 'json': return 'application/json'
+    case 'rss': return 'text/xml'
   }
 }
 
