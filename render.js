@@ -402,12 +402,13 @@ function render(opts, c) {
 	      renderPost(opts, c))];
   }
   else if (c.type == "git-update") {
-    return h('span.status',
-	     "Did a git update " +
-	     (c.repoName != undefined ? " in repo " + c.repoName : "") +
-	     '<br>' +
-	     (c.commits != undefined ?
-	      c.commits.map(com => { return "-" +com.title; }).join('<br>') : ""));
+    var s = h('span.status');
+    s.innerHTML = "Did a git update " +
+	  (c.repoName != undefined ? " in repo " + c.repoName : "") +
+	  '<br>' +
+	  (c.commits != undefined ?
+	   c.commits.map(com => { return "-" +com.title; }).join('<br>') : "");
+    return s;
   }
   else if (c.type == "ssb-dns") {
     return [h('span.status', 'Updated DNS'), renderDefault(c)];
