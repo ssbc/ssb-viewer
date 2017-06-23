@@ -401,6 +401,10 @@ function render(opts, c) {
 	      (c.repoName != undefined ? " in repo " + c.repoName : ""),
 	      renderPost(opts, c))];
   }
+  else if (c.type == "git-repo") {
+    return h('span.status',
+	     "Created a git repo " + c.name);
+  }
   else if (c.type == "git-update") {
     var s = h('span.status');
     s.innerHTML = "Did a git update " +
