@@ -210,7 +210,7 @@ exports.init = function (sbot, config) {
 		  pull.values(logs),
 		  paramap(addAuthorAbout, 8),
 		  paramap(addVoteMessage, 8),
-		  pull(renderThread(defaultOpts,
+		  pull(renderThread(defaultOpts, '',
 				    renderShowAll(showAll, req.url)),
 		       wrapPage('#' + channelId)),
 		  toPull(res, function (err) {
