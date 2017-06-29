@@ -158,7 +158,7 @@ exports.init = function (sbot, config) {
 		      }
 		  })
 		  
-		  serveFeeds(req, res, following, channelSubscriptions, feedId, 'user feed ' + about.name)
+		  serveFeeds(req, res, following, channelSubscriptions, feedId, 'user feed ' + (about ? about.name : ""))
 	      })
 	  )
       })
