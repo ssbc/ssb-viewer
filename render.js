@@ -117,8 +117,7 @@ function renderAbout(opts, about, showAllHTML = "") {
 	     h('figure',
 	       h('img',
 		 { src: opts.img_base + about.image,
-		   height: 200,
-		   width: 200
+		   style: 'max-height: 200px; max-width: 200px;'
 		 }),
 	       figCaption)
 	    )).outerHTML,
