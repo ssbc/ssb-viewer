@@ -41,11 +41,17 @@ MdRenderer.prototype.urltransform = function(href) {
 };
 
 MdRenderer.prototype.image = function(href, title, text) {
-  return h('img',
-	   { src: this.opts.img_base + href,
-	     alt: text,
-	     title: title
-	   }).outerHTML;
+  if (text.endsWith(".svg"))
+    return h('object',
+	     { type: 'image/svg+xml',
+	       data: href,
+	       alt: text }).outerHTML;
+  else
+    return h('img',
+	     { src: this.opts.img_base + href,
+	       alt: text,
+	       title: title
+	     }).outerHTML;
 };
 
 function renderEmoji(emoji) {
