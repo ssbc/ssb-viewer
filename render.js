@@ -43,11 +43,17 @@ MdRenderer.prototype.urltransform = function(href) {
 };
 
 MdRenderer.prototype.image = function(href, title, text) {
-  return h('img',
-	   { src: this.opts.img_base + href,
-	     alt: text,
-	     title: title
-	   }).outerHTML;
+  if (text.endsWith(".svg"))
+    return h('object',
+	     { type: 'image/svg+xml',
+	       data: href,
+	       alt: text }).outerHTML;
+  else
+    return h('img',
+	     { src: this.opts.img_base + href,
+	       alt: text,
+	       title: title
+	     }).outerHTML;
 };
 
 function renderEmoji(emoji) {
@@ -77,7 +83,7 @@ function escape(str) {
 function formatMsgs(id, ext, opts) {
   switch (ext || "html") {
     case "html":
-      return pull(renderThread(opts), wrapPage(id));
+      return pull(renderThread(opts, id, ''), wrapPage(id));
     case "js":
       return pull(renderThread(opts), wrapJSEmbed(opts));
     case "json":
@@ -114,15 +120,14 @@ function renderAbout(opts, about, showAllHTML = "") {
 	(about.description != undefined ? 
 	 marked(about.description, opts.marked) : '');
   return pull(
-    pull.map(renderMsg.bind(this, opts)),
+    pull.map(renderMsg.bind(this, opts, '')),
     wrap(toolTipTop() + '<main>' +
 	 h('article',
 	   h('header',
 	     h('figure',
 	       h('img',
 		 { src: opts.img_base + about.image,
-		   height: 200,
-		   width: 200
+		   style: 'max-height: 200px; max-width: 200px;'
 		 }),
 	       figCaption)
 	    )).outerHTML,
@@ -130,9 +135,9 @@ function renderAbout(opts, about, showAllHTML = "") {
   );
 }
 
-function renderThread(opts, showAllHTML = "") {
+function renderThread(opts, id, showAllHTML = "") {
   return pull(
-    pull.map(renderMsg.bind(this, opts)),
+    pull.map(renderMsg.bind(this, opts, id)),
     wrap(toolTipTop() + '<main>', 
 	 showAllHTML + '</main>' + callToAction())
   );
@@ -333,7 +338,7 @@ function docWrite(str) {
   return "document.write(" + JSON.stringify(str) + ")\n";
 }
 
-function renderMsg(opts, msg) {
+function renderMsg(opts, id, msg) {
   var c = msg.value.content || {};
   var name = encodeURIComponent(msg.key);
   return h('article#' + name,
@@ -347,7 +352,7 @@ function renderMsg(opts, msg) {
 		   { href: opts.base + escape(msg.value.author) },
 		   msg.author.name),
 		 msgTimestamp(msg, opts.base + name)))),
-	   render(opts, c)).outerHTML;
+	   render(opts, id, c)).outerHTML;
 }
 
 function renderRss(opts, msg) {
@@ -387,7 +392,7 @@ function formatDate(date) {
   return htime(date);
 }
 
-function render(opts, c) {
+function render(opts, id, c) {
   var base = opts.base;
   if (c.type === "post") {
     var channel = c.channel
@@ -396,7 +401,7 @@ function render(opts, c) {
 	      { href: base + 'channel/' + c.channel },
 	      '#' + c.channel))
 	: "";
-    return [channel, renderPost(opts, c)];
+    return [channel, renderPost(opts, id, c)];
   } else if (c.type == "vote" && c.vote.expression == "Dig") {
     var channel = c.channel
 	? [' in ',
@@ -443,15 +448,20 @@ function render(opts, c) {
     return [h('span.status',
 	     "Created a git issue" +
 	      (c.repoName != undefined ? " in repo " + c.repoName : ""),
-	      renderPost(opts, c))];
+	      renderPost(opts, id, c))];
+  }
+  else if (c.type == "git-repo") {
+    return h('span.status',
+	     "Created a git repo " + c.name);
   }
   else if (c.type == "git-update") {
-    return h('span.status',
-	     "Did a git update " +
-	     (c.repoName != undefined ? " in repo " + c.repoName : "") +
-	     '<br>' +
-	     (c.commits != undefined ?
-	      c.commits.map(com => { return "-" +com.title; }).join('<br>') : ""));
+    var s = h('span.status');
+    s.innerHTML = "Did a git update " +
+	  (c.repoName != undefined ? " in repo " + c.repoName : "") +
+	  '<br>' +
+	  (c.commits != undefined ?
+	   c.commits.map(com => { return "-" +com.title; }).join('<br>') : "");
+    return s;
   }
   else if (c.type == "ssb-dns") {
     return [h('span.status', 'Updated DNS'), renderDefault(c)];
@@ -474,7 +484,7 @@ function render(opts, c) {
   else return renderDefault(c);
 }
 
-function renderPost(opts, c) {
+function renderPost(opts, id, c) {
   opts.mentions = {};
   if (Array.isArray(c.mentions)) {
       c.mentions.forEach(function (link) {
@@ -483,7 +493,12 @@ function renderPost(opts, c) {
       });
   }
   var s = h('section');
-  s.innerHTML = marked(String(c.text), opts.marked);
+  var content = '';
+  if (c.root && c.root != id)
+      content += 'Re: ' + h('a',
+			    { href: '/' + encodeURIComponent(c.root) },
+			    c.root.substring(0, 10)).outerHTML + '<br>';
+  s.innerHTML = content + marked(String(c.text), opts.marked);
   return s;
 }
 
