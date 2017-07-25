@@ -66,6 +66,7 @@ exports.init = function (sbot, config) {
 
   var getMsg = memo({cache: lru(100)}, getMsgWithValue, sbot)
   var getAbout = memo({cache: lru(100)}, require('./lib/about'), sbot)
+  var serveAcmeChallenge = require('ssb-acme-validator')(sbot)
 
   http.createServer(serve).listen(port, host, function () {
     console.log('[viewer] Listening on http://' + host + ':' + port)
@@ -80,6 +81,7 @@ exports.init = function (sbot, config) {
 
     if (req.url.startsWith('/user-feed/')) return serveUserFeed(req, res, m[4])
     else if (req.url.startsWith('/channel/')) return serveChannel(req, res, m[4])
+    else if (req.url.startsWith('/.well-known/acme-challenge')) return serveAcmeChallenge(req, res)
 
     if (m[2] && m[2].length === 3) {
       m[1] = decodeURIComponent(m[1])
