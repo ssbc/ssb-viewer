@@ -394,6 +394,7 @@ function formatDate(date) {
 
 function render(opts, id, c) {
   var base = opts.base;
+  if (!c) return
   if (c.type === "post") {
     var channel = c.channel
 	? h('div.top-right',
