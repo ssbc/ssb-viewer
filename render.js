@@ -473,6 +473,9 @@ function render(opts, id, c) {
   else if (c.type == "pub") {
     return h('span.status', 'Connected to the pub ' + c.address.host);
   }
+  else if (c.type == "npm-packages") {
+    return [h('span.status', 'Pushed npm packages')];
+  }
   else if (c.type == "channel" && c.subscribed)
     return h('span.status',
 	     'Subscribed to channel ',
