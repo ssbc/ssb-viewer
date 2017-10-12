@@ -439,6 +439,10 @@ function render(opts, id, c) {
 	      h('a', { href: base + c.contact }, name)]);
   } else if (typeof c == "string") {
     return h('span.status', 'Wrote something private')
+  } else if (c.type == "chess_move") {
+    return h('span.status', 'Moved a chess piece')
+  } else if (c.type == "chess_invite") {
+    return h('span.status', 'Started a chess game')
   }
   else if (c.type == "about") {
     return [h('span.status', 'Changed something in about'),
