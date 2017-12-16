@@ -515,8 +515,8 @@ function renderDefault(c) {
 }
 
 function renderShowAll(showAll, url) {
-    if (showAll)
-	return '';
-    else
-	return '<br>' + h('a', { href : url + '?showAll' }, 'Show whole feed').outerHTML;
+  if (showAll)
+    return '';
+  else
+    return '<br>' + h('a', { href : url + '?showAll' }, 'Show whole feed').outerHTML;
 }
