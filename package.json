@@ -15,9 +15,9 @@
     "pull-paramap": "^1.2.1",
     "pull-stream": "^3.5.0",
     "ssb-acme-validator": "http://localhost:8989/blobs/get/&MgpztmIbg8wShqDXBcKt0w78qwcpNe8qb4n3fsveve8=.sha256",
-    "ssb-client": "^4.4.0",
-    "ssb-marked": "^0.7.2",
-    "ssb-ref": "^2.6.2",
+    "ssb-client": "^4.5.2",
+    "ssb-marked": "^0.7.3",
+    "ssb-ref": "^2.9.0",
     "ssb-sort": "^1.0.0",
     "stream-to-pull-stream": "^1.7.2"
   },
