@@ -115,10 +115,9 @@ function toolTipTop() {
 }
 
 function renderAbout(opts, about, showAllHTML = "") {
+  opts.mentions = {}
   var figCaption = h('figcaption');
-  figCaption.innerHTML = 'Feed of ' + about.name + '<br>' +
-	(about.description != undefined ? 
-	 marked(about.description, opts.marked) : '');
+  figCaption.innerHTML = 'Feed of ' + about.name + '<br>' +  marked(String(about.description), opts.marked);
   return pull(
     pull.map(renderMsg.bind(this, opts, '')),
     wrap(toolTipTop() + '<main>' +
