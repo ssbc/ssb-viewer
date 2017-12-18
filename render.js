@@ -33,7 +33,7 @@ MdRenderer.prototype.urltransform = function(href) {
     case "%":
       return this.opts.msg_base + encodeURIComponent(href);
     case "@":
-      href = this.opts.mentions[href.substr(1)] || href;
+      href = (this.opts.mentions && this.opts.mentions[href.substr(1)]) || href;
       return this.opts.feed_base + encodeURIComponent(href);
     case "&":
       return this.opts.blob_base + encodeURIComponent(href);
@@ -58,9 +58,8 @@ MdRenderer.prototype.image = function(href, title, text) {
 
 function renderEmoji(emoji) {
   var opts = this.renderer.opts;
-  var mentions = opts.mentions;
-  var url = mentions[emoji]
-    ? opts.blob_base + encodeURIComponent(mentions[emoji])
+  var url = opts.mentions[emoji]
+    ? opts.blob_base + encodeURIComponent(opts.mentions[emoji])
     : emoji in emojis && opts.emoji_base + escape(emoji) + '.png';
   return url
 	? h('img.ssb-emoji',
