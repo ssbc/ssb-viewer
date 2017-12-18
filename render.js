@@ -115,9 +115,9 @@ function toolTipTop() {
 }
 
 function renderAbout(opts, about, showAllHTML = "") {
-  opts.mentions = {}
+  opts.mentions = {};
   var figCaption = h('figcaption');
-  figCaption.innerHTML = 'Feed of ' + about.name + '<br>' +  marked(String(about.description), opts.marked);
+  figCaption.innerHTML = 'Feed of ' + about.name + '<br>' + marked(String(about.description), opts.marked);
   return pull(
     pull.map(renderMsg.bind(this, opts, '')),
     wrap(toolTipTop() + '<main>' +
@@ -338,6 +338,7 @@ function docWrite(str) {
 }
 
 function renderMsg(opts, id, msg) {
+  if (opts.renderPrivate == false && typeof(msg.value.content) == 'string') return ''
   var c = msg.value.content || {};
   var name = encodeURIComponent(msg.key);
   return h('article#' + name,
