@@ -114,7 +114,7 @@ function toolTipTop() {
 }
 
 function renderAbout(opts, about, showAllHTML = "") {
-  if (about.publicWebHosting == 'false') {
+  if (about.publicWebHosting === false) {
     return pull(
       pull.map(renderMsg.bind(this, opts, '')),
       wrap(toolTipTop() + '<main>', '</main>' + callToAction())
@@ -345,7 +345,7 @@ function docWrite(str) {
 
 function renderMsg(opts, id, msg) {
   if (opts.renderPrivate == false && typeof(msg.value.content) == 'string') return ''
-  if (msg.author.publicWebHosting == 'false') return h('article', 'User has chosen not to be hosted publicly').outerHTML;
+  if (msg.author.publicWebHosting === false) return h('article', 'User has chosen not to be hosted publicly').outerHTML;
   var c = msg.value.content || {};
   var name = encodeURIComponent(msg.key);
   return h('article#' + name,
