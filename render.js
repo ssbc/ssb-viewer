@@ -123,7 +123,7 @@ function renderAbout(opts, about, showAllHTML = "") {
 
   opts.mentions = {};
   var figCaption = h('figcaption');
-  figCaption.innerHTML = 'Feed of ' + about.name + '<br>' + marked(String(about.description), opts.marked);
+  figCaption.innerHTML = 'Feed of ' + about.name + '<br>' + marked(String(about.description || ''), opts.marked);
   return pull(
     pull.map(renderMsg.bind(this, opts, '')),
     wrap(toolTipTop() + '<main>' +
@@ -221,7 +221,7 @@ var styles = `
       border-radius: 2px; margin-right: 10px;
     }
     article > header > figure > figcaption {
-      display: flex; flex-direction: column; justify-content: space-around;
+      display: flex; flex-direction: column;
     }
     .ssb-avatar-name { font-size: 1.2em; font-weight: bold; }
     time a { color: #868e96; }
