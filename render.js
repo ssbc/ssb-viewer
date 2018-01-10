@@ -265,12 +265,14 @@ var styles = `
       padding: 5px;
       border-radius: 3px;
       position: relative;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     pre::before {
       content: "METADATA";
       position: absolute;
-      top: -7px;
-      left: 0px;
+      top: -3px;
+      right: 0px;
       background-color: #212529;
       padding: 2px 4px 0;
       border-radius: 2px;
