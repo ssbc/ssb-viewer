@@ -58,7 +58,7 @@ MdRenderer.prototype.image = function(href, title, text) {
 
 function renderEmoji(emoji) {
   var opts = this.renderer.opts;
-  var url = opts.mentions[emoji]
+  var url = opts.mentions && opts.mentions[emoji]
     ? opts.blob_base + encodeURIComponent(opts.mentions[emoji])
     : emoji in emojis && opts.emoji_base + escape(emoji) + '.png';
   return url
