@@ -223,6 +223,9 @@ var styles = `
     article > header > figure > figcaption {
       display: flex; flex-direction: column;
     }
+    article > section {
+      word-wrap: break-word;
+    }
     .ssb-avatar-name { font-size: 1.2em; font-weight: bold; }
     time a { color: #868e96; }
     .ssb-avatar-name, time a {
