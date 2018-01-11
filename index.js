@@ -175,13 +175,19 @@ exports.init = function (sbot, config) {
 	    }
 	  })
 	  
-	  serveFeeds(req, res, following, channelSubscriptions, feedId, 'user feed ' + (about ? about.name : ""))
+	  serveFeeds(req, res, following, channelSubscriptions, feedId,
+                     'user feed ' + (about ? about.name : ""))
 	})
       )
     })
   }
 
   function serveFeeds(req, res, following, channelSubscriptions, feedId, name) {
+    var feedOpts = Object.assign({}, defaultOpts, {
+      renderPrivate: false,
+      renderSubscribe: false
+    })
+
     pull(
       sbot.createLogStream({ reverse: true, limit: 5000 }),
       pull.filter((msg) => {
@@ -201,7 +207,7 @@ exports.init = function (sbot, config) {
 	  paramap(addFollowAbout, 8),
 	  paramap(addVoteMessage, 8),
 	  paramap(addGitLinks, 8),
-	  pull(renderThread(Object.assign({}, defaultOpts, { renderPrivate: false })), wrapPage(name)),
+	  pull(renderThread(feedOpts), wrapPage(name)),
 	  toPull(res, function (err) {
 	    if (err) console.error('[viewer]', err)
 	  })
