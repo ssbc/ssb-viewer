@@ -349,11 +349,13 @@ function docWrite(str) {
 }
 
 function renderMsg(opts, id, msg) {
+  var c = msg.value.content || {};
+
   if (opts.renderPrivate == false && typeof(msg.value.content) == 'string') return ''
-  if (opts.renderSubscribe == false && msg.value.content.type == "channel" && msg.value.content.subscribed != undefined) return ''
+  if (opts.renderSubscribe == false && c.type == "channel" && c.subscribed != undefined) return ''
+  if (opts.renderAbout == false && c.type == "about") return ''
   if (msg.author.publicWebHosting === false) return h('article', 'User has chosen not to be hosted publicly').outerHTML;
 
-  var c = msg.value.content || {};
   var name = encodeURIComponent(msg.key);
   return h('article#' + name,
 	   h('header',

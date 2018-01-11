@@ -185,7 +185,8 @@ exports.init = function (sbot, config) {
   function serveFeeds(req, res, following, channelSubscriptions, feedId, name) {
     var feedOpts = Object.assign({}, defaultOpts, {
       renderPrivate: false,
-      renderSubscribe: false
+      renderSubscribe: false,
+      renderAbout: false
     })
 
     pull(
