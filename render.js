@@ -121,7 +121,6 @@ function renderAbout(opts, about, showAllHTML = "") {
     );
   }
 
-  opts.mentions = {};
   var figCaption = h('figcaption');
   figCaption.innerHTML = 'Feed of ' + about.name + '<br>' + marked(String(about.description || ''), opts.marked);
   return pull(
@@ -531,8 +530,6 @@ function renderDefault(c) {
 }
 
 function renderShowAll(showAll, url) {
-  if (showAll)
-    return '';
-  else
+  if (!showAll)
     return '<br>' + h('a', { href : url + '?showAll' }, 'Show whole feed').outerHTML;
 }
