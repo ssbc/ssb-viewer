@@ -9,6 +9,7 @@ var sort = require('ssb-sort')
 var toPull = require('stream-to-pull-stream')
 var memo = require('asyncmemo')
 var lru = require('lrucache')
+var webresolve = require('ssb-web-resolver')
 var serveEmoji = require('emoji-server')()
 var {
   MdRenderer,
@@ -82,6 +83,7 @@ exports.init = function (sbot, config) {
     if (req.url.startsWith('/user-feed/')) return serveUserFeed(req, res, m[4])
     else if (req.url.startsWith('/channel/')) return serveChannel(req, res, m[4])
     else if (req.url.startsWith('/.well-known/acme-challenge')) return serveAcmeChallenge(req, res)
+    else if (req.url.startsWith('/web/')) return serveWeb(req, res, m[4])
 
     if (m[2] && m[2].length === 3) {
       m[1] = decodeURIComponent(m[1])
@@ -139,6 +141,28 @@ exports.init = function (sbot, config) {
               if (err) console.error('[viewer]', err)
             })
           )
+        })
+      )
+    })
+  }
+
+  function serveWeb (req, res, url) {
+    var self = this
+    var id = decodeURIComponent(url.substr(1))
+
+    var components = url.split('/')
+    if (components[0] === '') components.shift()
+    if (components[0] === 'web') components.shift()
+    components[0] = decodeURIComponent(components[0])
+
+    webresolve(sbot, components, function (err, data) {
+      if (err) {
+        return respond(res, 404, 'ERROR: ' + err)
+      }
+      return pull(
+        pull.once(data),
+        toPull(res, function (err) {
+          if (err) console.error('[viewer]', err)
         })
       )
     })
