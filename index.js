@@ -120,6 +120,9 @@ exports.init = function (sbot, config) {
 
       pull(
         sbot.createUserStream({ id: feedId, reverse: true, limit: showAll ? -1 : (ext == 'rss' ? 25 : 10) }),
+        pull.filter(function (data) {
+          return 'object' === typeof data.value.content
+        }),
         pull.collect(function (err, logs) {
           if (err) return respond(res, 500, err.stack || err)
           res.writeHead(200, {
@@ -235,7 +238,7 @@ exports.init = function (sbot, config) {
 	  paramap(addAuthorAbout, 8),
 	  paramap(addVoteMessage, 8),
 	  pull(renderThread(defaultOpts, '',
-			    renderShowAll(showAll, req.url)),
+	        renderShowAll(showAll, req.url)),
 	       wrapPage('#' + channelId)),
 	  toPull(res, function (err) {
 	    if (err) console.error('[viewer]', err)
@@ -279,28 +282,37 @@ exports.init = function (sbot, config) {
     var format = formatMsgs(id, ext, opts)
     if (format === null) return respond(res, 415, 'Invalid format')
 
-    pull(
-      sbot.links({dest: id, values: true }),
-      includeRoot && prepend(getMsg, id),
-      pull.unique('key'),
-      pull.collect(function (err, links) {
-        if (err) return respond(res, 500, err.stack || err)
-        var etag = hash(sort.heads(links).concat(appHash, ext, qs))
-        if (req.headers['if-none-match'] === etag) return respond(res, 304)
-        res.writeHead(200, {
-          'Content-Type': ctype(ext),
-          'etag': etag
-        })
-        pull(
-          pull.values(sort(links)),
-          paramap(addAuthorAbout, 8),
-          format,
-          toPull(res, function (err) {
-            if (err) console.error('[viewer]', err)
-          })
-        )
+    function render (links) {
+      var etag = hash(sort.heads(links).concat(appHash, ext, qs))
+      if (req.headers['if-none-match'] === etag) return respond(res, 304)
+      res.writeHead(200, {
+        'Content-Type': ctype(ext),
+        'etag': etag
       })
-    )
+      pull(
+        pull.values(sort(links)),
+        paramap(addAuthorAbout, 8),
+        format,
+        toPull(res, function (err) {
+          if (err) console.error('[viewer]', err)
+        })
+      )
+    }
+
+    getMsgWithValue(sbot, id, function (err, root) {
+      if (err) return respond(res, 500, err.stack || err)
+      if('string' === typeof root.value.content)
+        return render([root])
+
+      pull(
+        sbot.links({dest: id, values: true, rel: 'root' }),
+        pull.unique('key'),
+        pull.collect(function (err, links) {
+          if (err) return respond(res, 500, err.stack || err)
+          render(links)
+        })
+      )
+    })
   }
 
   function addFollowAbout(msg, cb) {
