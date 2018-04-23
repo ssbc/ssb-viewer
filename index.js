@@ -177,34 +177,34 @@ exports.init = function (sbot, config) {
     
     getAbout(feedId, function (err, about) {
       pull(
-	sbot.createUserStream({ id: feedId }),
-	pull.filter((msg) => {
-	  return !msg.value ||
-	    msg.value.content.type == 'contact' ||
-	    (msg.value.content.type == 'channel' &&
-	     typeof msg.value.content.subscribed != 'undefined')
-	}),
-	pull.collect(function (err, msgs) {
-	  msgs.forEach((msg) => {
-	    if (msg.value.content.type == 'contact')
-	    {
-	      if (msg.value.content.following)
-		following[msg.value.content.contact] = 1
-	      else
-		delete following[msg.value.content.contact]
-	    }
-	    else // channel subscription
-	    {
-	      if (msg.value.content.subscribed)
-		channelSubscriptions[msg.value.content.channel] = 1
-	      else
-		delete channelSubscriptions[msg.value.content.channel]
-	    }
-	  })
-	  
-	  serveFeeds(req, res, following, channelSubscriptions, feedId,
+  sbot.createUserStream({ id: feedId }),
+  pull.filter((msg) => {
+    return !msg.value ||
+      msg.value.content.type == 'contact' ||
+      (msg.value.content.type == 'channel' &&
+       typeof msg.value.content.subscribed != 'undefined')
+  }),
+  pull.collect(function (err, msgs) {
+    msgs.forEach((msg) => {
+      if (msg.value.content.type == 'contact')
+      {
+        if (msg.value.content.following)
+    following[msg.value.content.contact] = 1
+        else
+    delete following[msg.value.content.contact]
+      }
+      else // channel subscription
+      {
+        if (msg.value.content.subscribed)
+    channelSubscriptions[msg.value.content.channel] = 1
+        else
+    delete channelSubscriptions[msg.value.content.channel]
+      }
+    })
+    
+    serveFeeds(req, res, following, channelSubscriptions, feedId,
                      'user feed ' + (about ? about.name : ""))
-	})
+  })
       )
     })
   }
@@ -219,27 +219,27 @@ exports.init = function (sbot, config) {
     pull(
       sbot.createLogStream({ reverse: true, limit: 5000 }),
       pull.filter((msg) => {
-	return !msg.value ||
-	  (msg.value.author in following ||
-	   msg.value.content.channel in channelSubscriptions)
+  return !msg.value ||
+    (msg.value.author in following ||
+     msg.value.content.channel in channelSubscriptions)
       }),
       pull.take(150),
       pull.collect(function (err, logs) {
-	if (err) return respond(res, 500, err.stack || err)
-	res.writeHead(200, {
-	  'Content-Type': ctype("html")
-	})
-	pull(
-	  pull.values(logs),
-	  paramap(addAuthorAbout, 8),
-	  paramap(addFollowAbout, 8),
-	  paramap(addVoteMessage, 8),
-	  paramap(addGitLinks, 8),
-	  pull(renderThread(feedOpts), wrapPage(name)),
-	  toPull(res, function (err) {
-	    if (err) console.error('[viewer]', err)
-	  })
-	)
+  if (err) return respond(res, 500, err.stack || err)
+  res.writeHead(200, {
+    'Content-Type': ctype("html")
+  })
+  pull(
+    pull.values(logs),
+    paramap(addAuthorAbout, 8),
+    paramap(addFollowAbout, 8),
+    paramap(addVoteMessage, 8),
+    paramap(addGitLinks, 8),
+    pull(renderThread(feedOpts), wrapPage(name)),
+    toPull(res, function (err) {
+      if (err) console.error('[viewer]', err)
+    })
+  )
       })
     )
   }
@@ -253,21 +253,21 @@ exports.init = function (sbot, config) {
     pull(
       sbot.query.read({ limit: showAll ? 300 : 10, reverse: true, query: [{$filter: { value: { content: { channel: channelId }}}}]}),
       pull.collect(function (err, logs) {
-	if (err) return respond(res, 500, err.stack || err)
-	res.writeHead(200, {
-	  'Content-Type': ctype("html")
-	})
-	pull(
-	  pull.values(logs),
-	  paramap(addAuthorAbout, 8),
-	  paramap(addVoteMessage, 8),
-	  pull(renderThread(defaultOpts, '',
-	        renderShowAll(showAll, req.url)),
-	       wrapPage('#' + channelId)),
-	  toPull(res, function (err) {
-	    if (err) console.error('[viewer]', err)
-	  })
-	)
+  if (err) return respond(res, 500, err.stack || err)
+  res.writeHead(200, {
+    'Content-Type': ctype("html")
+  })
+  pull(
+    pull.values(logs),
+    paramap(addAuthorAbout, 8),
+    paramap(addVoteMessage, 8),
+    pull(renderThread(defaultOpts, '',
+          renderShowAll(showAll, req.url)),
+         wrapPage('#' + channelId)),
+    toPull(res, function (err) {
+      if (err) console.error('[viewer]', err)
+    })
+  )
       })
     )
   }
@@ -333,6 +333,8 @@ exports.init = function (sbot, config) {
         pull.unique('key'),
         pull.collect(function (err, links) {
           if (err) return respond(res, 500, err.stack || err)
+          if(includeRoot)
+            links.unshift(root)
           render(links)
         })
       )
@@ -342,9 +344,9 @@ exports.init = function (sbot, config) {
   function addFollowAbout(msg, cb) {
     if (msg.value.content.contact)
       getAbout(msg.value.content.contact, function (err, about) {
-	if (err) return cb(err)
-	msg.value.content.contactAbout = about
-	cb(null, msg)
+  if (err) return cb(err)
+  msg.value.content.contactAbout = about
+  cb(null, msg)
       })
     else
       cb(null, msg)
@@ -353,9 +355,9 @@ exports.init = function (sbot, config) {
   function addVoteMessage(msg, cb) {
     if (msg.value.content.type == 'vote' && msg.value.content.vote.link[0] == '%')
       getMsg(msg.value.content.vote.link, function (err, linkedMsg) {
-	if (linkedMsg)
-	  msg.value.content.vote.linkedText = linkedMsg.value.content.text
-	cb(null, msg)
+  if (linkedMsg)
+    msg.value.content.vote.linkedText = linkedMsg.value.content.text
+  cb(null, msg)
       })
     else
       cb(null, msg)
@@ -372,15 +374,15 @@ exports.init = function (sbot, config) {
   function addGitLinks(msg, cb) {
     if (msg.value.content.type == 'git-update')
       getMsg(msg.value.content.repo, function (err, gitRepo) {
-	if (gitRepo)
-	  msg.value.content.repoName = gitRepo.value.content.name
-	cb(null, msg)
+  if (gitRepo)
+    msg.value.content.repoName = gitRepo.value.content.name
+  cb(null, msg)
       })
     else if (msg.value.content.type == 'issue')
       getMsg(msg.value.content.project, function (err, gitRepo) {
-	if (gitRepo)
-	  msg.value.content.repoName = gitRepo.value.content.name
-	cb(null, msg)
+  if (gitRepo)
+    msg.value.content.repoName = gitRepo.value.content.name
+  cb(null, msg)
       })
     else
       cb(null, msg)
