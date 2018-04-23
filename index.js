@@ -333,6 +333,8 @@ exports.init = function (sbot, config) {
         pull.unique('key'),
         pull.collect(function (err, links) {
           if (err) return respond(res, 500, err.stack || err)
+          if(includeRoot)
+            links.unshift(root)
           render(links)
         })
       )
