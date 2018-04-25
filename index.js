@@ -356,7 +356,7 @@ exports.init = function (sbot, config) {
   }
 
   function addVoteMessage(msg, cb) {
-    if (msg.value.content.type == 'vote' && msg.value.content.vote.link[0] == '%')
+    if (msg.value.content.type == 'vote' && msg.value.content.vote && msg.value.content.vote.link[0] == '%')
       getMsg(msg.value.content.vote.link, function (err, linkedMsg) {
 	if (linkedMsg)
 	  msg.value.content.vote.linkedText = linkedMsg.value.content.text
