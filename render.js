@@ -504,6 +504,20 @@ function render(opts, id, c) {
 	     h('a',
 	       { href: base + 'channel/' + c.channel },
 	       '#' + c.channel))
+  else if (c.type == "blog") {
+    //%RTXvyZ2fZWwTyWdlk0lYGk5sKw5Irj+Wk4QwxyOVG5g=.sha256
+    var channel = c.channel
+	? h('div.top-right',
+	    h('a',
+	      { href: base + 'channel/' + c.channel },
+	      '#' + c.channel))
+	: "";
+
+    var s = h('section');
+    s.innerHTML = marked(String(c.blogContent), opts.marked)
+
+    return [channel, h('h2', c.title), s];
+  }
   else return renderDefault(c);
 }
 

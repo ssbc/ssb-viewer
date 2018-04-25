@@ -133,6 +133,7 @@ exports.init = function (sbot, config) {
           pull(
             pull.values(logs),
             paramap(addAuthorAbout, 8),
+            paramap(addBlog, 8),
             paramap(addFollowAbout, 8),
             paramap(addVoteMessage, 8),
             paramap(addGitLinks, 8),
@@ -232,6 +233,7 @@ exports.init = function (sbot, config) {
 	pull(
 	  pull.values(logs),
 	  paramap(addAuthorAbout, 8),
+          paramap(addBlog, 8),
 	  paramap(addFollowAbout, 8),
 	  paramap(addVoteMessage, 8),
 	  paramap(addGitLinks, 8),
@@ -260,9 +262,9 @@ exports.init = function (sbot, config) {
 	pull(
 	  pull.values(logs),
 	  paramap(addAuthorAbout, 8),
+          paramap(addBlog, 8),
 	  paramap(addVoteMessage, 8),
-	  pull(renderThread(defaultOpts, '',
-	        renderShowAll(showAll, req.url)),
+	  pull(renderThread(defaultOpts, '', renderShowAll(showAll, req.url)),
 	       wrapPage('#' + channelId)),
 	  toPull(res, function (err) {
 	    if (err) console.error('[viewer]', err)
@@ -316,6 +318,7 @@ exports.init = function (sbot, config) {
       pull(
         pull.values(sort(links)),
         paramap(addAuthorAbout, 8),
+        paramap(addBlog, 8),
         format,
         toPull(res, function (err) {
           if (err) console.error('[viewer]', err)
@@ -360,6 +363,19 @@ exports.init = function (sbot, config) {
 	cb(null, msg)
       })
     else
+      cb(null, msg)
+  }
+
+  function addBlog(msg, cb) {
+    if (msg.value && msg.value.content.type == "blog") {
+      pull(
+        sbot.blobs.get(msg.value.content.blog),
+        pull.collect(function(err, blob) {
+          msg.value.content.blogContent = blob
+          cb(null, msg)
+        })
+      )
+    } else
       cb(null, msg)
   }
 
