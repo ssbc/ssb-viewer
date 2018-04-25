@@ -352,7 +352,12 @@ function renderMsg(opts, id, msg) {
 
   if (opts.renderPrivate == false && typeof(msg.value.content) == 'string') return ''
   if (opts.renderSubscribe == false && c.type == "channel" && c.subscribed != undefined) return ''
+  if (opts.renderVote == false && c.type == "vote") return ''
+  if (opts.renderChess == false && c.type.startsWith("chess")) return ''
+  if (opts.renderTalenet == false && c.type.startsWith("talenet")) return ''
+  if (opts.renderFollow == false && c.type == "contact") return ''
   if (opts.renderAbout == false && c.type == "about") return ''
+  if (opts.renderPub == false && c.type == "pub") return ''
   if (msg.author.publicWebHosting === false) return h('article', 'User has chosen not to be hosted publicly').outerHTML;
 
   var name = encodeURIComponent(msg.key);

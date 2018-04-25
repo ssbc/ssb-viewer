@@ -214,6 +214,11 @@ exports.init = function (sbot, config) {
     var feedOpts = Object.assign({}, defaultOpts, {
       renderPrivate: false,
       renderSubscribe: false,
+      renderVote: false,
+      renderTalenet: false,
+      renderChess: false,
+      renderFollow: false,
+      renderPub: false,
       renderAbout: false
     })
 
