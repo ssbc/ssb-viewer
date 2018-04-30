@@ -93,7 +93,7 @@ exports.init = function (sbot, config) {
       case '%': return serveId(req, res, m[1], m[3], m[5])
       case '@': return serveFeed(req, res, m[1], m[3], m[5])
       case '&': return serveBlob(req, res, sbot, m[1])
-      default: return servePath(req, res, m[4])
+      default: return servePath(req, res, m[4], conf)
     }
   }
 
@@ -453,9 +453,9 @@ function ctype(name) {
   }
 }
 
-function servePath(req, res, url) {
+function servePath(req, res, url, conf) {
   switch (url) {
-    case '/robots.txt': return res.end('User-agent: *')
+    case '/robots.txt': return serveRobots(req, res, conf)
   }
   var m = /^(\/?[^\/]*)(\/.*)?$/.exec(url)
   switch (m[1]) {
@@ -489,6 +489,11 @@ function serveFile(req, res, file) {
     })
     fs.createReadStream(file).pipe(res)
   })
+}
+
+function serveRobots(req, res, conf) {
+  res.end('User-agent: *'
+    + (conf.disallowRobots ? '\nDisallow: /' : ''))
 }
 
 function prepend(fn, arg) {
