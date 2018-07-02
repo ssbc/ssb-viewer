@@ -137,6 +137,7 @@ exports.init = function (sbot, config) {
             paramap(addFollowAbout, 8),
             paramap(addVoteMessage, 8),
             paramap(addGitLinks, 8),
+            paramap(addGatheringAbout, 8),
             render(),
             toPull(res, function (err) {
               if (err) console.error('[viewer]', err)
@@ -242,6 +243,7 @@ exports.init = function (sbot, config) {
 	  paramap(addFollowAbout, 8),
 	  paramap(addVoteMessage, 8),
 	  paramap(addGitLinks, 8),
+    paramap(addGatheringAbout, 8),
 	  pull(renderThread(feedOpts), wrapPage(name)),
 	  toPull(res, function (err) {
 	    if (err) console.error('[viewer]', err)
@@ -268,7 +270,8 @@ exports.init = function (sbot, config) {
 	  pull.values(logs),
 	  paramap(addAuthorAbout, 8),
           paramap(addBlog, 8),
-	  paramap(addVoteMessage, 8),
+    paramap(addVoteMessage, 8),
+    paramap(addGatheringAbout, 8),
 	  pull(renderThread(defaultOpts, '', renderShowAll(showAll, req.url)),
 	       wrapPage('#' + channelId)),
 	  toPull(res, function (err) {
@@ -324,6 +327,7 @@ exports.init = function (sbot, config) {
         pull.values(sort(links)),
         paramap(addAuthorAbout, 8),
         paramap(addBlog, 8),
+        paramap(addGatheringAbout, 8),
         format,
         toPull(res, function (err) {
           if (err) console.error('[viewer]', err)
@@ -390,6 +394,21 @@ exports.init = function (sbot, config) {
       msg.author = about
       cb(null, msg)
     })
+  }
+
+  function addGatheringAbout(msg, cb) {
+    if (msg.value && msg.value.content.type === 'gathering') {
+      console.log('adding gathering abouts. msg:', msg)
+      getAbout(msg.key, (err, about) => {
+        if (err) { return cb(err) }
+
+        msg.value.content.about = about
+        console.log('about gathering', about)
+        cb(null, msg)
+      })
+    } else {
+      cb(null, msg)
+    }
   }
 
   function addGitLinks(msg, cb) {

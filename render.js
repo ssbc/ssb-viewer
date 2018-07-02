@@ -523,7 +523,23 @@ function render(opts, id, c) {
 
     return [channel, h('h2', c.title), s];
   }
+  else if (c.type === 'gathering') {
+    console.log('opts', opts)
+    console.log('c', c)
+
+    return ['id: ' + id,
+      h('div',
+        ['this is a gathering boopadoop',
+        renderGathering(opts, id, c)]
+      )
+    ]
+  }
   else return renderDefault(c);
+}
+
+function renderGathering(opts, id, c) {
+  console.log('gathering content:', c)
+  return h('div', c.about.description)
 }
 
 function renderPost(opts, id, c) {
