@@ -524,13 +524,9 @@ function render(opts, id, c) {
     return [channel, h('h2', c.title), s];
   }
   else if (c.type === 'gathering') {
-    console.log('opts', opts)
-    console.log('c', c)
-
     return ['id: ' + id,
       h('div',
-        ['this is a gathering boopadoop',
-        renderGathering(opts, id, c)]
+        renderGathering(opts, id, c)
       )
     ]
   }
@@ -538,8 +534,15 @@ function render(opts, id, c) {
 }
 
 function renderGathering(opts, id, c) {
+  console.log('opts', opts)
   console.log('gathering content:', c)
-  return h('div', c.about.description)
+  const desc = h('div')
+  desc.innerHTML = marked(c.about.description, opts.marked)
+  const image = h('p', h('img', { src: opts.img_base + c.about.image }))
+  return h('section',
+    [image,
+    desc]
+  )
 }
 
 function renderPost(opts, id, c) {
