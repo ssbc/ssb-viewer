@@ -296,6 +296,9 @@ var styles = `
       background-color: #748ffc;
       border-bottom: 3px solid #4c6ef5;
     }
+    .attending {
+      text-align: center;
+    }
   </style>
 `;
 
@@ -524,23 +527,19 @@ function render(opts, id, c) {
     return [channel, h('h2', c.title), s];
   }
   else if (c.type === 'gathering') {
-    return ['id: ' + id,
-      h('div',
-        renderGathering(opts, id, c)
-      )
-    ]
+    return h('div', renderGathering(opts, id, c))
   }
   else return renderDefault(c);
 }
 
 function renderGathering(opts, id, c) {
-  console.log('opts', opts)
-  console.log('gathering content:', c)
   const desc = h('div')
   desc.innerHTML = marked(c.about.description, opts.marked)
   const image = h('p', h('img', { src: opts.img_base + c.about.image }))
+  const attending = h('h3.attending', c.numberAttending + ' attending')
   return h('section',
     [image,
+    attending,
     desc]
   )
 }

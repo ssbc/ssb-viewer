@@ -398,13 +398,31 @@ exports.init = function (sbot, config) {
 
   function addGatheringAbout(msg, cb) {
     if (msg.value && msg.value.content.type === 'gathering') {
-      console.log('adding gathering abouts. msg:', msg)
       getAbout(msg.key, (err, about) => {
-        if (err) { return cb(err) }
+        if (err) { cb(err) }
 
         msg.value.content.about = about
-        console.log('about gathering', about)
-        cb(null, msg)
+
+        pull(
+          sbot.backlinks.read({
+            query: [{ $filter: {
+              dest: msg.key,
+              value: { content: { type: 'about' }},
+            }}],
+            index: 'DTA'
+          }),
+          //pull.map(o => { console.log('bl:', o.value.content); return o }),
+          // Only grab messages about attendance
+          pull.filter(o => o.value.content.attendee !== undefined),
+          // Filter "can't attend"-messages
+          pull.filter(o => !o.value.content.attendee.remove),
+          pull.unique(o => o.value.content.attendee.link),
+          pull.collect((err, arr) => {
+            if (err) { cb(err) }
+            msg.value.content.numberAttending = arr.length
+            cb(null, msg)
+          })
+        )
       })
     } else {
       cb(null, msg)
