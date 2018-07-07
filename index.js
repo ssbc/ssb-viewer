@@ -411,7 +411,6 @@ exports.init = function (sbot, config) {
             }}],
             index: 'DTA'
           }),
-          //pull.map(o => { console.log('bl:', o.value.content); return o }),
           // Only grab messages about attendance
           pull.filter(o => o.value.content.attendee !== undefined),
           // Filter "can't attend"-messages
@@ -419,7 +418,9 @@ exports.init = function (sbot, config) {
           pull.unique(o => o.value.content.attendee.link),
           pull.collect((err, arr) => {
             if (err) { cb(err) }
+
             msg.value.content.numberAttending = arr.length
+
             cb(null, msg)
           })
         )

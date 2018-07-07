@@ -537,8 +537,11 @@ function renderGathering(opts, id, c) {
   desc.innerHTML = marked(c.about.description, opts.marked)
   const image = h('p', h('img', { src: opts.img_base + c.about.image }))
   const attending = h('h3.attending', c.numberAttending + ' attending')
+  const title = h('h2', c.about.title)
+  console.log('c', c)
   return h('section',
-    [image,
+    [title,
+    image,
     attending,
     desc]
   )
