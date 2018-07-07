@@ -296,6 +296,9 @@ var styles = `
       background-color: #748ffc;
       border-bottom: 3px solid #4c6ef5;
     }
+    .attending {
+      text-align: center;
+    }
   </style>
 `;
 
@@ -523,7 +526,26 @@ function render(opts, id, c) {
 
     return [channel, h('h2', c.title), s];
   }
+  else if (c.type === 'gathering') {
+    return h('div', renderGathering(opts, id, c))
+  }
   else return renderDefault(c);
+}
+
+function renderGathering(opts, id, c) {
+  const title = h('h2', c.about.title)
+  const time = h('h3', new Date(c.about.startDateTime.epoch).toUTCString())
+  const image = h('p', h('img', { src: opts.img_base + c.about.image }))
+  const attending = h('h3.attending', c.numberAttending + ' attending')
+  const desc = h('div')
+  desc.innerHTML = marked(c.about.description, opts.marked)
+  return h('section',
+    [title,
+    time,
+    image,
+    attending,
+    desc]
+  )
 }
 
 function renderPost(opts, id, c) {
