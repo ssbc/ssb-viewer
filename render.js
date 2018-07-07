@@ -533,13 +533,12 @@ function render(opts, id, c) {
 }
 
 function renderGathering(opts, id, c) {
-  const desc = h('div')
-  desc.innerHTML = marked(c.about.description, opts.marked)
-  const image = h('p', h('img', { src: opts.img_base + c.about.image }))
-  const attending = h('h3.attending', c.numberAttending + ' attending')
   const title = h('h2', c.about.title)
   const time = h('h3', new Date(c.about.startDateTime.epoch).toUTCString())
-  console.log('c', c)
+  const image = h('p', h('img', { src: opts.img_base + c.about.image }))
+  const attending = h('h3.attending', c.numberAttending + ' attending')
+  const desc = h('div')
+  desc.innerHTML = marked(c.about.description, opts.marked)
   return h('section',
     [title,
     time,
