@@ -538,9 +538,11 @@ function renderGathering(opts, id, c) {
   const image = h('p', h('img', { src: opts.img_base + c.about.image }))
   const attending = h('h3.attending', c.numberAttending + ' attending')
   const title = h('h2', c.about.title)
+  const time = h('h3', new Date(c.about.startDateTime.epoch).toUTCString())
   console.log('c', c)
   return h('section',
     [title,
+    time,
     image,
     attending,
     desc]
