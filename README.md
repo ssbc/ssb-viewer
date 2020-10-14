@@ -1,3 +1,13 @@
+# Current version
+
+Please see:
+https://git.scuttlebot.io/%25MeCTQrz9uszf9EZoTnKCeFeIedhnKWuB3JHW2l1g9NA%3D.sha256
+`ssb://%MeCTQrz9uszf9EZoTnKCeFeIedhnKWuB3JHW2l1g9NA=.sha256`
+
+---
+
+# :warning: Deprecated version :
+
 # ssb-viewer
 
 HTTP server for read-only views of SSB content. Serves content as web pages or as scripts for embedding in other web pages.
